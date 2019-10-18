@@ -11,6 +11,12 @@ Function Get-YoutubeAlbum() {
 
     .parameter albumManifest
     A text file containing information required to download and create an album.
+    The file must have the following contents:
+
+    Album Name|Artist Name
+    https://youtube.com/someurl1....
+    https://youtube.com/someurl2...
+    https://youtube.com/someurl3...
 
     .example
     Coming Soon!
@@ -19,7 +25,14 @@ Function Get-YoutubeAlbum() {
         [Parameter(Mandatory=$True)] [String] $albumManifest
     )
 
-    If (VerifyToolsInstalled -eq $False) { return }
+    If (-Not(VerifyToolsInstalled)) {
+        return
+    }
+
+    If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
+        Write-Host ("File '{0}' does not exist." -f $albumManifest)
+        return
+    }
 }
 
 Function VerifyToolsInstalled() {
