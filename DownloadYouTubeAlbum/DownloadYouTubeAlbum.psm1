@@ -39,6 +39,24 @@ Function Get-YoutubeAlbum() {
     If (-Not(VerifyManifestContents($albumManifestContents))) {
         return
     }
+
+    $albumInfo = GetAlbumInfo($albumManifestContents)
+
+    Push-Location
+
+    If (-Not(Test-Path -Path $albumInfo['artist'] -PathType Directory)) {
+        New-Item -ItemType Directory -Path $albumInfo['artist'] | Out-Null
+    }
+    Set-Location $albumInfo['artist']
+    # TODO: What if the album folder exists and there are files in it?
+    If (-Not(Test-Path -Path $albumInfo['album'] -PathType Directory)) {
+        New-Item -ItemType Directory -Path $albumInfo['album'] | Out-Null
+    }
+    Set-Location $albumInfo['album']
+
+    # Download videos here
+
+    Pop-Location
 }
 
 Function VerifyToolsInstalled() {
@@ -97,6 +115,15 @@ Function VerifyManifestContents([String[]] $contents) {
     }
 
     return $True
+}
+
+Function GetAlbumInfo($contents) {
+    $firstLineSplit = $contents[0].Split('|')
+    $albumInfo = @{}
+    $albumInfo.Add("artist", $firstLineSplit[0])
+    $albumInfo.Add("album", $firstLineSplit[1])
+
+    return $albumInfo
 }
 
 Export-ModuleMember -Function @(
