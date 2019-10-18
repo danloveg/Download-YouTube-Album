@@ -25,38 +25,50 @@ Function Get-YoutubeAlbum() {
         [Parameter(Mandatory=$True)] [String] $albumManifest
     )
 
-    If (-Not(VerifyToolsInstalled)) {
-        return
+    $beetConfig = $NULL
+
+    Try {
+        If (-Not(VerifyToolsInstalled)) {
+            return
+        }
+
+        $beetConfig = UpdateBeetConfig
+
+        If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
+            Write-Host ("File '{0}' does not exist." -f $albumManifest)
+            return
+        }
+
+        $albumManifestContents = (Get-Content $albumManifest)
+
+        If (-Not(VerifyManifestContents($albumManifestContents))) {
+            return
+        }
+
+        $albumInfo = GetAlbumInfo($albumManifestContents)
+
+        Push-Location
+
+        If (-Not(Test-Path -Path $albumInfo['artist'] -PathType Container)) {
+            New-Item -ItemType Directory -Path $albumInfo['artist'] | Out-Null
+        }
+        Set-Location $albumInfo['artist']
+        # TODO: What if the album folder exists and there are files in it?
+        If (-Not(Test-Path -Path $albumInfo['album'] -PathType Container)) {
+            New-Item -ItemType Directory -Path $albumInfo['album'] | Out-Null
+        }
+        Set-Location $albumInfo['album']
+
+        # Download videos here
+
+        Pop-Location
+    } Catch {
+        Write-Host $_.Exception | Format-List -Force
+    } Finally {
+        If ($beetConfig -ne $NULL) {
+            RestoreBeetConfig($beetConfig)
+        }
     }
-
-    If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
-        Write-Host ("File '{0}' does not exist." -f $albumManifest)
-        return
-    }
-
-    $albumManifestContents = (Get-Content $albumManifest)
-
-    If (-Not(VerifyManifestContents($albumManifestContents))) {
-        return
-    }
-
-    $albumInfo = GetAlbumInfo($albumManifestContents)
-
-    Push-Location
-
-    If (-Not(Test-Path -Path $albumInfo['artist'] -PathType Directory)) {
-        New-Item -ItemType Directory -Path $albumInfo['artist'] | Out-Null
-    }
-    Set-Location $albumInfo['artist']
-    # TODO: What if the album folder exists and there are files in it?
-    If (-Not(Test-Path -Path $albumInfo['album'] -PathType Directory)) {
-        New-Item -ItemType Directory -Path $albumInfo['album'] | Out-Null
-    }
-    Set-Location $albumInfo['album']
-
-    # Download videos here
-
-    Pop-Location
 }
 
 Function VerifyToolsInstalled() {
@@ -124,6 +136,41 @@ Function GetAlbumInfo($contents) {
     $albumInfo.Add("album", $firstLineSplit[1])
 
     return $albumInfo
+}
+
+# Beet config processing
+Function UpdateBeetConfig() {
+    $configLocation = [String](beet config -p)
+    $origContents = @()
+
+    If (-Not (Test-Path -Path $configLocation -PathType Leaf)) {
+        Write-Host ("Creating a new beet default config file.")
+        New-Item -ItemType File -Path $configLocation
+    } Else {
+        Write-Host ("Overwriting beet config, to be restored after processing.")
+        $origContents = (Get-Content $configLocation)
+    }
+
+    GetDefaultBeetConfig | Out-File $configLocation
+
+    $configInfo = @{}
+    $configInfo.Add("configLocation", $configLocation)
+    $configInfo.Add("originalContents", $origContents)
+    return $configInfo
+}
+
+Function GetDefaultBeetConfig() {
+    return @(
+        "import:",
+        "    copy: no",
+        "",
+        "plugins: fromfilename embedart fetchart"
+    )
+}
+
+Function RestoreBeetConfig($configInfo) {
+    Write-Host "Restoring your beet config."
+    $configInfo["originalContents"] | Out-File $configInfo["configLocation"]
 }
 
 Export-ModuleMember -Function @(
