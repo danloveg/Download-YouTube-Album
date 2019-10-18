@@ -13,7 +13,7 @@ Function Get-YoutubeAlbum() {
     A text file containing information required to download and create an album.
     The file must have the following contents:
 
-    Album Name|Artist Name
+    Artist Name|Album Name
     https://youtube.com/someurl1....
     https://youtube.com/someurl2...
     https://youtube.com/someurl3...
@@ -31,6 +31,12 @@ Function Get-YoutubeAlbum() {
 
     If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
         Write-Host ("File '{0}' does not exist." -f $albumManifest)
+        return
+    }
+
+    $albumManifestContents = (Get-Content $albumManifest)
+
+    If (-Not(VerifyManifestContents($albumManifestContents))) {
         return
     }
 }
@@ -60,6 +66,33 @@ Function VerifyToolsInstalled() {
         If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
             Write-Error "Something went wrong installing beets. See above output."
             return $False
+        }
+    }
+
+    return $True
+}
+
+Function VerifyManifestContents([String[]] $contents) {
+    If ($contents.Length -eq 0) {
+        Write-Error "Album manifest file appears to be empty."
+        return $False
+    }
+
+    $firstLine = $contents[0]
+    $firstLineContents = $firstLine.Split('|')
+    If ($firstLineContents.Length -ne 2) {
+        Write-Error "First line of file is not in the correct format. Should be <Artist Name>|<Album Name>"
+        return $False
+    }
+
+    $secondLineAndLater = ($contents | Select-Object -Skip 1)
+    Foreach ($line in $secondLineAndLater) {
+        If (-Not([String]::IsNullOrWhiteSpace($line))) {
+            $uri = $line -as [System.URI]
+            If ($uri -eq $null -Or -Not($uri.Scheme -match '[http|https]')) {
+                Write-Error ("The line `"{0}`" does not appear to be a url" -f $line)
+                return $False
+            }
         }
     }
 
