@@ -59,7 +59,7 @@ Function Get-YoutubeAlbum() {
         }
         Set-Location $albumInfo['album']
 
-        # Download videos here
+        DownloadAudio($albumManifestContents)
 
         Pop-Location
     } Catch {
@@ -138,6 +138,16 @@ Function GetAlbumInfo($contents) {
     return $albumInfo
 }
 
+Function DownloadAudio($albumManifestContents) {
+    $urls = ($albumManifestContents | Select-Object -Skip 1)
+
+    Foreach ($url in $urls) {
+        If (-Not([String]::IsNullOrWhiteSpace($url))) {
+            youtube-dl --no-playlist --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
+        }
+    }
+}
+
 # Beet config processing
 Function UpdateBeetConfig() {
     $configLocation = [String](beet config -p)
@@ -161,6 +171,7 @@ Function UpdateBeetConfig() {
 
 Function GetDefaultBeetConfig() {
     return @(
+       ("directory: {0}" -f ([String] (Get-Location).Path)),
         "import:",
         "    copy: no",
         "",
