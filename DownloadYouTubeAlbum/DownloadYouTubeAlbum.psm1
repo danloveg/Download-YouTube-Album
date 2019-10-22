@@ -32,23 +32,19 @@ Function Get-YoutubeAlbum() {
         If (-Not(VerifyToolsInstalled)) {
             return
         }
-
-        $env:Path = GetNewPathVariable
-
-        $beetConfig = UpdateBeetConfig
-
         If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
             Write-Host ("File '{0}' does not exist." -f $albumManifest)
             return
         }
 
         $albumManifestContents = (Get-Content $albumManifest)
-
         If (-Not(VerifyManifestContents($albumManifestContents))) {
             return
         }
-
         $albumInfo = GetAlbumInfo($albumManifestContents)
+
+        $env:Path = GetNewPathVariable
+        $beetConfig = UpdateBeetConfig
 
         Push-Location
 
@@ -73,11 +69,11 @@ Function Get-YoutubeAlbum() {
         # Update the names of the files
         beet move $albumInfo['artist']
 
-        Write-Host 'Done.'
+        Write-Host
     } Catch {
         Write-Host $_.Exception | Format-List -Force
     } Finally {
-        If ($Null -eq $beetConfig) {
+        If ($Null -ne $beetConfig) {
             RestoreBeetConfig($beetConfig)
         }
         $env:path = $oldEnvPath
@@ -164,10 +160,13 @@ Function DownloadAudio($albumManifestContents) {
     }
 }
 
+Function GetBeetsPlugFolder() {
+    return Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
+}
+
 Function GetNewPathVariable() {
-    $beetsPlugPath = Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
-    $newEnvPath = ("{0}{1};" -f $env:path, $beetsPlugPath)
-    return $newEnvPath
+    $beetsPlugFolder = GetBeetsPlugFolder
+    return ("{0}{1};" -f $env:path, $beetsPlugFolder)
 }
 
 # Beet config processing
@@ -192,12 +191,17 @@ Function UpdateBeetConfig() {
 }
 
 Function GetDefaultBeetConfig() {
+    $beetsPlugFolder = GetBeetsPlugFolder
+
     return @(
        ("directory: {0}" -f ([String] (Get-Location).Path)),
         "import:",
         "    copy: no",
         "",
+       ("pluginpath: {0}" -f $beetsPlugFolder),
         "plugins: fromdirname fromfilename fetchart embedart",
+        "embedart:",
+        "    remove_art_file: yes"
     )
 }
 
