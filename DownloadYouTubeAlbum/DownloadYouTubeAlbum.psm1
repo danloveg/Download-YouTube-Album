@@ -26,11 +26,14 @@ Function Get-YoutubeAlbum() {
     )
 
     $beetConfig = $NULL
+    $oldEnvPath = $env:path
 
     Try {
         If (-Not(VerifyToolsInstalled)) {
             return
         }
+
+        $env:Path = GetNewPathVariable
 
         $beetConfig = UpdateBeetConfig
 
@@ -59,15 +62,25 @@ Function Get-YoutubeAlbum() {
         }
         Set-Location $albumInfo['album']
 
+        # Download the audio into the album folder
         DownloadAudio($albumManifestContents)
 
         Pop-Location
+
+        # Update the music tags
+        beet import $albumInfo['artist']
+
+        # Update the names of the files
+        beet move $albumInfo['artist']
+
+        Write-Host 'Done.'
     } Catch {
         Write-Host $_.Exception | Format-List -Force
     } Finally {
-        If ($beetConfig -ne $NULL) {
+        If ($Null -eq $beetConfig) {
             RestoreBeetConfig($beetConfig)
         }
+        $env:path = $oldEnvPath
     }
 }
 
@@ -76,6 +89,9 @@ Function VerifyToolsInstalled() {
         Write-Error "Could not find python installation. Go to python.org to install."
         return $False
     }
+
+    # TODO: Test for ffmpeg or avconv?
+
     If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
         Write-Warning "Could not find youtube-dl, attemtpting to install with pip."
 
@@ -119,7 +135,7 @@ Function VerifyManifestContents([String[]] $contents) {
     Foreach ($line in $secondLineAndLater) {
         If (-Not([String]::IsNullOrWhiteSpace($line))) {
             $uri = $line -as [System.URI]
-            If ($uri -eq $null -Or -Not($uri.Scheme -match '[http|https]')) {
+            If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
                 Write-Error ("The line `"{0}`" does not appear to be a url" -f $line)
                 return $False
             }
@@ -146,6 +162,12 @@ Function DownloadAudio($albumManifestContents) {
             youtube-dl --no-playlist --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
         }
     }
+}
+
+Function GetNewPathVariable() {
+    $beetsPlugPath = Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
+    $newEnvPath = ("{0}{1};" -f $env:path, $beetsPlugPath)
+    return $newEnvPath
 }
 
 # Beet config processing
@@ -175,7 +197,7 @@ Function GetDefaultBeetConfig() {
         "import:",
         "    copy: no",
         "",
-        "plugins: fromfilename embedart fetchart"
+        "plugins: fromdirname fromfilename fetchart embedart",
     )
 }
 
