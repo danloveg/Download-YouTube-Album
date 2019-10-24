@@ -82,11 +82,14 @@ Function Get-YoutubeAlbum() {
 
 Function VerifyToolsInstalled() {
     If (-Not(Get-Command python -ErrorAction SilentlyContinue)) {
-        Write-Error "Could not find python installation. Go to python.org to install."
+        Write-Host "Could not find python installation. Go to python.org to install." -ForegroundColor Red
         return $False
     }
 
-    # TODO: Test for ffmpeg or avconv?
+    If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+        Write-Host "Could not find FFmpeg installation. Go to ffmpeg.org to install." -ForegroundColor Red
+        return $False
+    }
 
     If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
         Write-Warning "Could not find youtube-dl, attemtpting to install with pip."
@@ -95,7 +98,7 @@ Function VerifyToolsInstalled() {
         pip install youtube-dl
 
         If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
-            Write-Error "Something went wrong installing youtube-dl. See above output"
+            Write-Host "Something went wrong installing youtube-dl. See above output" -ForegroundColor Red
             return $False
         }
     }
@@ -106,7 +109,7 @@ Function VerifyToolsInstalled() {
         pip install beets
 
         If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
-            Write-Error "Something went wrong installing beets. See above output."
+            Write-Host "Something went wrong installing beets. See above output." -ForegroundColor Red
             return $False
         }
     }
