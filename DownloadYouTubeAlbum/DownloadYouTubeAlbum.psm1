@@ -3,7 +3,7 @@ Function Get-YoutubeAlbum() {
     .synopsis
     YouTube music album downloader. Solves the problem of having to download
     songs one by one from some youtube to mp3 converter, before tediously
-    editing the files by hand.
+    editing the metadata by hand.
 
     .description
     Use youtube-dl to download a list of mp3s from URLs, then use beets tool to
@@ -22,7 +22,8 @@ Function Get-YoutubeAlbum() {
     Coming Soon!
     #>
     Param(
-        [Parameter(Mandatory=$True)] [String] $albumManifest
+        [Parameter(Mandatory=$True)] [String] $albumManifest,
+        [Switch] $isPlaylist = $False
     )
 
     $beetConfig = $NULL
@@ -59,7 +60,7 @@ Function Get-YoutubeAlbum() {
         Set-Location $albumInfo['album']
 
         # Download the audio into the album folder
-        DownloadAudio($albumManifestContents)
+        DownloadAudio $albumManifestContents $isPlaylist
 
         Pop-Location
 
@@ -153,12 +154,16 @@ Function GetAlbumInfo($contents) {
     return $albumInfo
 }
 
-Function DownloadAudio($albumManifestContents) {
+Function DownloadAudio($albumManifestContents, $isPlaylist) {
     $urls = ($albumManifestContents | Select-Object -Skip 1)
 
     Foreach ($url in $urls) {
         If (-Not([String]::IsNullOrWhiteSpace($url))) {
-            youtube-dl --no-playlist --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
+            If ($isPlaylist -eq $True) {
+                youtube-dl --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
+            } Else {
+                youtube-dl --no-playlist --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
+            }
         }
     }
 }
