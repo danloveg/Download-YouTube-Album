@@ -209,7 +209,9 @@ Function GetDefaultBeetConfig() {
        ("pluginpath: {0}" -f $beetsPlugFolder),
         "plugins: fromdirname fromfilename fetchart embedart",
         "embedart:",
-        "    remove_art_file: yes"
+        "    remove_art_file: yes",
+        "fetchart:",
+        "    maxwidth: 512"
     )
 }
 
