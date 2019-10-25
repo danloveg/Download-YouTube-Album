@@ -11,16 +11,43 @@ Function Get-YoutubeAlbum() {
 
     .parameter albumManifest
     A text file containing information required to download and create an album.
-    The file must have the following contents:
+    The file must start with the album and artist name in any order, followed by
+    one or more URLs. The URLs may be YouTube playlists. This is a sample album
+    manifest:
 
-    Artist: <artist name>
     Album: <album name>
-    https://youtube.com/someurl1....
-    https://youtube.com/someurl2...
-    https://youtube.com/someurl3...
+    Artist: <artist name>
+    https://youtube.com/someplaylist
+
+    .parameter isPlaylist
+    Download YouTube URLs as playlists.
 
     .example
-    Coming Soon!
+    DOWNLOAD ONE PLAYLIST AS AN ALBUM
+    Assume the artist is Foo, and the album is Bar. The album manifest should contain:
+
+    Artist: Foo
+    Album: Bar
+    https://youtube.com/foobarplaylist
+
+    The command to download this album:
+
+    Get-YoutubeAlbum -albumManifest path/to/manifest.txt -isPlaylist
+
+    .example
+    DOWNLOAD MUTLIPLE DIFFERENT SONGS AS AN ALBUM
+    Assume the artist is Peel, and the album is Banana. Also assume that there
+    are three songs in the album. The album manifest should contain:
+
+    Album: Banana
+    Arist: Peel
+    https://youtube.com/someurl1
+    https://youtube.com/someurl2
+    https://youtube.com/someurl3
+
+    The command to download this album:
+
+    Get-YoutubeAlbum path/to/manifest.txt
     #>
     Param(
         [Parameter(Mandatory=$True)] [String] $albumManifest,
