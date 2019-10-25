@@ -140,6 +140,7 @@ Function VerifyToolsInstalled() {
 
         Write-Host "pip install beets" -ForegroundColor Green
         pip install beets
+        pip install requests
 
         If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
             Write-Host "Something went wrong installing beets. See above output." -ForegroundColor Red
