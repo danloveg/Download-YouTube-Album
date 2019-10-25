@@ -13,7 +13,8 @@ Function Get-YoutubeAlbum() {
     A text file containing information required to download and create an album.
     The file must have the following contents:
 
-    Artist Name|Album Name
+    Artist: <artist name>
+    Album: <album name>
     https://youtube.com/someurl1....
     https://youtube.com/someurl2...
     https://youtube.com/someurl3...
@@ -34,7 +35,7 @@ Function Get-YoutubeAlbum() {
             return
         }
         If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
-            Write-Host ("File '{0}' does not exist." -f $albumManifest)
+            Write-Host ("File '{0}' does not exist." -f $albumManifest) -ForegroundColor Red
             return
         }
 
@@ -60,19 +61,25 @@ Function Get-YoutubeAlbum() {
         Set-Location $albumInfo['album']
 
         # Download the audio into the album folder
+        Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumInfo['album'], $albumInfo['artist']) -ForegroundColor Green
         DownloadAudio $albumManifestContents $isPlaylist
 
         Pop-Location
 
         # Update the music tags
+        Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
         beet import $albumInfo['artist']
 
         # Update the names of the files
+        Write-Host ("`nRenaming music file names.`n") -ForegroundColor Green
         beet move $albumInfo['artist']
 
         Write-Host
     } Catch {
-        Write-Host $_.Exception | Format-List -Force
+        $e = $_.Exception
+        $line = $_.InvocationInfo.ScriptLineNumber
+
+        Write-Host "LINE: $line`n$e" -ForegroundColor Red
     } Finally {
         If ($Null -ne $beetConfig) {
             RestoreBeetConfig($beetConfig)
@@ -86,12 +93,10 @@ Function VerifyToolsInstalled() {
         Write-Host "Could not find python installation. Go to python.org to install." -ForegroundColor Red
         return $False
     }
-
     If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
         Write-Host "Could not find FFmpeg installation. Go to ffmpeg.org to install." -ForegroundColor Red
         return $False
     }
-
     If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
         Write-Warning "Could not find youtube-dl, attemtpting to install with pip."
 
@@ -120,23 +125,39 @@ Function VerifyToolsInstalled() {
 
 Function VerifyManifestContents([String[]] $contents) {
     If ($contents.Length -eq 0) {
-        Write-Error "Album manifest file appears to be empty."
+        Write-Host "Album manifest file appears to be empty." -ForegroundColor Red
         return $False
+    }
+    If ($contents.Length -lt 3) {
+        Write-Host "Album manifest file requires at least three lines for artist, album, and URL" -ForegroundColor Red
     }
 
     $firstLine = $contents[0]
-    $firstLineContents = $firstLine.Split('|')
-    If ($firstLineContents.Length -ne 2) {
-        Write-Error "First line of file is not in the correct format. Should be <Artist Name>|<Album Name>"
+    $secondLine = $contents[1]
+
+    If ($firstLine -Match "^[Aa]rtist:\s*.+$") {
+        If ($secondLine -NotMatch "^[Aa]lbum:\s*.+$") {
+            Write-Host "Second line of manifest file must start with 'Album:'" -ForegroundColor Red
+            return $False
+        }
+    }
+    ElseIf ($firstLine -Match "^[Aa]lbum:\s*.+$") {
+        If ($secondLine -NotMatch "^[Aa]rtist:\s*.+$") {
+            Write-Host "Second line of manifest file must start with 'Artist:'" -ForegroundColor Red
+            return $False
+        }
+    }
+    Else {
+        Write-Host "First line of manifest file must start with 'Album:' or 'Artist:'" -ForegroundColor Red
         return $False
     }
 
-    $secondLineAndLater = ($contents | Select-Object -Skip 1)
+    $thirdLineAndLater = ($contents | Select-Object -Skip 2)
     Foreach ($line in $secondLineAndLater) {
         If (-Not([String]::IsNullOrWhiteSpace($line))) {
             $uri = $line -as [System.URI]
             If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
-                Write-Error ("The line `"{0}`" does not appear to be a url" -f $line)
+                Write-Host ("The line `"{0}`" does not appear to be a url" -f $line) -ForegroundColor Red
                 return $False
             }
         }
@@ -146,22 +167,49 @@ Function VerifyManifestContents([String[]] $contents) {
 }
 
 Function GetAlbumInfo($contents) {
-    $firstLineSplit = $contents[0].Split('|')
+    $firstLine = $contents[0]
+    $secondLine = $contents[1]
+
+    $ArtistName = ''
+    $AlbumName = ''
+
+    $artistMatch = "^[Aa]rtist:\s*(.+)$"
+    $albumMatch = "^[Aa]lbum:\s*(.+)$"
+
+    $firstLineArtistMatch = [Regex]::Match($firstLine, $artistMatch)
+    $firstLineAlbumMatch = [Regex]::Match($firstLine, $albumMatch)
+
+    If ($firstLineArtistMatch.Success) {
+        $ArtistName = ([String] $firstLineArtistMatch.Groups[1].Value).Trim()
+        $secondLineAlbumMatch = [Regex]::Match($secondLine, $albumMatch)
+        $AlbumName = ([String] $secondLineAlbumMatch.Groups[1].Value).Trim()
+    }
+    ElseIf ($firstLineAlbumMatch.Success) {
+        $AlbumName = ([String] $firstLineAlbumMatch.Groups[1].Value).Trim()
+        $secondLineArtistMatch = [Regex]::Match($secondLine, $artistMatch)
+        $ArtistName = ([String] $secondLineArtistMatch.Groups[1].Value).Trim()
+    }
+    Else {
+        Write-Host "Error getting album info. Could not find 'Artist:' or 'Album:' in first line of manifest." -ForegroundColor Red
+        return $NULL
+    }
+
     $albumInfo = @{}
-    $albumInfo.Add("artist", $firstLineSplit[0])
-    $albumInfo.Add("album", $firstLineSplit[1])
+    $albumInfo.Add("artist", $ArtistName)
+    $albumInfo.Add("album", $AlbumName)
 
     return $albumInfo
 }
 
 Function DownloadAudio($albumManifestContents, $isPlaylist) {
-    $urls = ($albumManifestContents | Select-Object -Skip 1)
+    $urls = ($albumManifestContents | Select-Object -Skip 2)
 
     Foreach ($url in $urls) {
         If (-Not([String]::IsNullOrWhiteSpace($url))) {
             If ($isPlaylist -eq $True) {
                 youtube-dl --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
-            } Else {
+            }
+            Else {
                 youtube-dl --no-playlist --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
             }
         }
@@ -185,7 +233,8 @@ Function UpdateBeetConfig() {
     If (-Not (Test-Path -Path $configLocation -PathType Leaf)) {
         Write-Host ("Creating a new beet default config file.")
         New-Item -ItemType File -Path $configLocation
-    } Else {
+    }
+    Else {
         Write-Host ("Overwriting beet config, to be restored after processing.")
         $origContents = (Get-Content $configLocation)
     }
