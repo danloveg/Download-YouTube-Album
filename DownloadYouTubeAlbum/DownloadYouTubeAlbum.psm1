@@ -181,7 +181,8 @@ Function VerifyManifestContents([String[]] $contents) {
     }
 
     $thirdLineAndLater = ($contents | Select-Object -Skip 2)
-    Foreach ($line in $secondLineAndLater) {
+
+    Foreach ($line in $thirdLineAndLater) {
         If (-Not([String]::IsNullOrWhiteSpace($line))) {
             $uri = $line -as [System.URI]
             If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
