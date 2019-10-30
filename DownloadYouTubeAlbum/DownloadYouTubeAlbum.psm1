@@ -55,7 +55,6 @@ Function Get-YoutubeAlbum() {
     )
 
     $beetConfig = $NULL
-    $oldEnvPath = $env:path
 
     Try {
         If (-Not(VerifyToolsInstalled)) {
@@ -72,7 +71,6 @@ Function Get-YoutubeAlbum() {
         }
         $albumInfo = GetAlbumInfo($albumManifestContents)
 
-        $env:Path = GetNewPathVariable
         $beetConfig = UpdateBeetConfig
 
         Push-Location
@@ -111,7 +109,6 @@ Function Get-YoutubeAlbum() {
         If ($Null -ne $beetConfig) {
             RestoreBeetConfig($beetConfig)
         }
-        $env:path = $oldEnvPath
     }
 }
 
@@ -247,11 +244,6 @@ Function DownloadAudio($albumManifestContents, $isPlaylist) {
 
 Function GetBeetsPlugFolder() {
     return Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
-}
-
-Function GetNewPathVariable() {
-    $beetsPlugFolder = GetBeetsPlugFolder
-    return ("{0}{1};" -f $env:path, $beetsPlugFolder)
 }
 
 # Beet config processing
