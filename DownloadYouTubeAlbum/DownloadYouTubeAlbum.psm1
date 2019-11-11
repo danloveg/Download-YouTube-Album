@@ -74,6 +74,7 @@ Function Get-YoutubeAlbum() {
 
         $beetConfig = UpdateBeetConfig
 
+        $initialLocation = (Get-Location).Path
         Push-Location
 
         If (-Not(Test-Path -Path $albumInfo['artist'] -PathType Container)) {
@@ -111,6 +112,12 @@ Function Get-YoutubeAlbum() {
     } Finally {
         If ($Null -ne $beetConfig) {
             RestoreBeetConfig($beetConfig)
+        }
+        If ($Null -ne $initialLocation) {
+            $currentLocation = (Get-Location).Path
+            If ($currentLocation -ne $initialLocation) {
+                Set-Location $initialLocation
+            }
         }
     }
 }
