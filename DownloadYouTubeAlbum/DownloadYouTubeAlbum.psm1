@@ -98,6 +98,12 @@ Function Get-YoutubeAlbum() {
         beet import $albumInfo['album']
 
         Pop-Location
+
+        # Remove empty artist folder if beets left one behind
+        $numItemsInArtistFolder = (Get-ChildItem $albumInfo['artist'] -Recurse | Measure-Object).Count
+        If ($numItemsInArtistFolder -le 1) {
+            Remove-Item -Recurse -Force $albumInfo['artist']
+        }
     } Catch {
         $e = $_.Exception
         $line = $_.InvocationInfo.ScriptLineNumber
