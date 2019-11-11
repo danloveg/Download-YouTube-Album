@@ -97,12 +97,6 @@ Function Get-YoutubeAlbum() {
         Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
         beet import $albumInfo['album']
 
-        # Update the names of the files
-        Write-Host ("`nRenaming mus`ic file names.`n") -ForegroundColor Green
-        beet move $albumInfo['album']
-
-        Write-Host
-
         Pop-Location
     } Catch {
         $e = $_.Exception
@@ -284,7 +278,7 @@ Function GetDefaultBeetConfig() {
     return @(
        ("directory: {0}" -f ([String] (Get-Location).Path)),
         "import:",
-        "    copy: no",
+        "    move: yes",
         "",
        ("pluginpath: {0}" -f $beetsPlugFolder),
         "plugins: fromdirname fromfilename fetchart embedart",
