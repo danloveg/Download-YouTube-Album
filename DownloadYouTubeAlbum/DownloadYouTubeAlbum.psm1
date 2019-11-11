@@ -55,6 +55,7 @@ Function Get-YoutubeAlbum() {
     )
 
     $beetConfig = $NULL
+    $initialLocation = $NULL
 
     Try {
         If (-Not(VerifyToolsInstalled)) {
@@ -83,23 +84,25 @@ Function Get-YoutubeAlbum() {
         If (-Not(Test-Path -Path $albumInfo['album'] -PathType Container)) {
             New-Item -ItemType Directory -Path $albumInfo['album'] | Out-Null
         }
-        Set-Location $albumInfo['album']
 
         # Download the audio into the album folder
+        Push-Location
+        Set-Location $albumInfo['album']
         Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumInfo['album'], $albumInfo['artist']) -ForegroundColor Green
         DownloadAudio $albumManifestContents $isPlaylist
-
         Pop-Location
 
         # Update the music tags
         Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
-        beet import $albumInfo['artist']
+        beet import $albumInfo['album']
 
         # Update the names of the files
-        Write-Host ("`nRenaming music file names.`n") -ForegroundColor Green
-        beet move $albumInfo['artist']
+        Write-Host ("`nRenaming mus`ic file names.`n") -ForegroundColor Green
+        beet move $albumInfo['album']
 
         Write-Host
+
+        Pop-Location
     } Catch {
         $e = $_.Exception
         $line = $_.InvocationInfo.ScriptLineNumber
