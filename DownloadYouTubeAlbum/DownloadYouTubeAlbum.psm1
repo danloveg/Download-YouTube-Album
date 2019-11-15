@@ -55,6 +55,7 @@ Function Get-YoutubeAlbum() {
     )
 
     $beetConfig = $NULL
+    $initialLocation = $NULL
 
     Try {
         If (-Not(VerifyToolsInstalled)) {
@@ -73,6 +74,7 @@ Function Get-YoutubeAlbum() {
 
         $beetConfig = UpdateBeetConfig
 
+        $initialLocation = (Get-Location).Path
         Push-Location
 
         If (-Not(Test-Path -Path $albumInfo['artist'] -PathType Container)) {
@@ -83,23 +85,25 @@ Function Get-YoutubeAlbum() {
         If (-Not(Test-Path -Path $albumInfo['album'] -PathType Container)) {
             New-Item -ItemType Directory -Path $albumInfo['album'] | Out-Null
         }
-        Set-Location $albumInfo['album']
 
         # Download the audio into the album folder
+        Push-Location
+        Set-Location $albumInfo['album']
         Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumInfo['album'], $albumInfo['artist']) -ForegroundColor Green
         DownloadAudio $albumManifestContents $noPlaylist
-
         Pop-Location
 
         # Update the music tags
         Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
-        beet import $albumInfo['artist']
+        beet import $albumInfo['album']
 
-        # Update the names of the files
-        Write-Host ("`nRenaming music file names.`n") -ForegroundColor Green
-        beet move $albumInfo['artist']
+        Pop-Location
 
-        Write-Host
+        # Remove empty artist folder if beets left one behind
+        $numItemsInArtistFolder = (Get-ChildItem $albumInfo['artist'] -Recurse | Measure-Object).Count
+        If ($numItemsInArtistFolder -le 1) {
+            Remove-Item -Recurse -Force $albumInfo['artist']
+        }
     } Catch {
         $e = $_.Exception
         $line = $_.InvocationInfo.ScriptLineNumber
@@ -108,6 +112,12 @@ Function Get-YoutubeAlbum() {
     } Finally {
         If ($Null -ne $beetConfig) {
             RestoreBeetConfig($beetConfig)
+        }
+        If ($Null -ne $initialLocation) {
+            $currentLocation = (Get-Location).Path
+            If ($currentLocation -ne $initialLocation) {
+                Set-Location $initialLocation
+            }
         }
     }
 }
@@ -274,7 +284,9 @@ Function GetDefaultBeetConfig() {
     return @(
        ("directory: {0}" -f ([String] (Get-Location).Path)),
         "import:",
-        "    copy: no",
+        "    move: yes",
+        "match:",
+        "    strong_rec_thresh: 0.10", #Automatically accept over 90% similar
         "",
        ("pluginpath: {0}" -f $beetsPlugFolder),
         "plugins: fromdirname fromfilename fetchart embedart",
