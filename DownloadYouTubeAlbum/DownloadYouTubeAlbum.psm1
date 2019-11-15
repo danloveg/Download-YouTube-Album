@@ -32,7 +32,7 @@ Function Get-YoutubeAlbum() {
 
     The command to download this album:
 
-    Get-YoutubeAlbum -albumManifest path/to/manifest.txt -isPlaylist
+    Get-YoutubeAlbum -albumManifest path/to/manifest.txt
 
     .example
     DOWNLOAD MUTLIPLE DIFFERENT SONGS AS AN ALBUM
@@ -47,11 +47,11 @@ Function Get-YoutubeAlbum() {
 
     The command to download this album:
 
-    Get-YoutubeAlbum path/to/manifest.txt
+    Get-YoutubeAlbum path/to/manifest.txt -noPlaylist
     #>
     Param(
         [Parameter(Mandatory=$True)] [String] $albumManifest,
-        [Switch] $isPlaylist = $False
+        [Switch] $noPlaylist = $False
     )
 
     $beetConfig = $NULL
@@ -87,7 +87,7 @@ Function Get-YoutubeAlbum() {
 
         # Download the audio into the album folder
         Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumInfo['album'], $albumInfo['artist']) -ForegroundColor Green
-        DownloadAudio $albumManifestContents $isPlaylist
+        DownloadAudio $albumManifestContents $noPlaylist
 
         Pop-Location
 
@@ -227,16 +227,16 @@ Function GetAlbumInfo($contents) {
     return $albumInfo
 }
 
-Function DownloadAudio($albumManifestContents, $isPlaylist) {
+Function DownloadAudio($albumManifestContents, $noPlaylist) {
     $urls = ($albumManifestContents | Select-Object -Skip 2)
 
     Foreach ($url in $urls) {
         If (-Not([String]::IsNullOrWhiteSpace($url))) {
-            If ($isPlaylist -eq $True) {
-                youtube-dl --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
+            If ($noPlaylist -eq $True) {
+                youtube-dl --no-playlist --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
             }
             Else {
-                youtube-dl --no-playlist --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
+                youtube-dl --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
             }
         }
     }
