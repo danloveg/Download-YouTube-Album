@@ -285,6 +285,8 @@ Function GetDefaultBeetConfig() {
        ("directory: {0}" -f ([String] (Get-Location).Path)),
         "import:",
         "    move: yes",
+        "match:",
+        "    strong_rec_thresh: 0.10", #Automatically accept over 90% similar
         "",
        ("pluginpath: {0}" -f $beetsPlugFolder),
         "plugins: fromdirname fromfilename fetchart embedart",
