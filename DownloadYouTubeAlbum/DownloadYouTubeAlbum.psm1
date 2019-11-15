@@ -70,34 +70,32 @@ Function Get-YoutubeAlbum() {
         If (-Not(VerifyManifestContents($albumManifestContents))) {
             return
         }
-        $albumInfo = GetAlbumInfo($albumManifestContents)
-
-        $beetConfig = UpdateBeetConfig
+        $albumInfo = GetAlbumInfo $albumManifestContents
 
         $initialLocation = (Get-Location).Path
-        Push-Location
+        $beetConfig = UpdateBeetConfig $initialLocation
+        Push-Location # Add current folder to stack
 
         If (-Not(Test-Path -Path $albumInfo['artist'] -PathType Container)) {
             New-Item -ItemType Directory -Path $albumInfo['artist'] | Out-Null
         }
         Set-Location $albumInfo['artist']
-        # TODO: What if the album folder exists and there are files in it?
+        Push-Location # Add artist folder to stack
+
+        # Download the audio into the album folder
         If (-Not(Test-Path -Path $albumInfo['album'] -PathType Container)) {
             New-Item -ItemType Directory -Path $albumInfo['album'] | Out-Null
         }
-
-        # Download the audio into the album folder
-        Push-Location
         Set-Location $albumInfo['album']
         Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumInfo['album'], $albumInfo['artist']) -ForegroundColor Green
         DownloadAudio $albumManifestContents $noPlaylist
-        Pop-Location
+        Pop-Location # Pop artist folder from stack
 
         # Update the music tags
         Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
         beet import $albumInfo['album']
 
-        Pop-Location
+        Pop-Location # Pop intial folder from stack
 
         # Remove empty artist folder if beets left one behind
         $numItemsInArtistFolder = (Get-ChildItem $albumInfo['artist'] -Recurse | Measure-Object).Count
@@ -252,12 +250,7 @@ Function DownloadAudio($albumManifestContents, $noPlaylist) {
     }
 }
 
-Function GetBeetsPlugFolder() {
-    return Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
-}
-
-# Beet config processing
-Function UpdateBeetConfig() {
+Function UpdateBeetConfig($artistDirParent) {
     $configLocation = [String](beet config -p)
     $origContents = @()
 
@@ -270,7 +263,7 @@ Function UpdateBeetConfig() {
         $origContents = (Get-Content $configLocation)
     }
 
-    GetDefaultBeetConfig | Out-File $configLocation
+    GetDefaultBeetConfig $artistDirParent | Out-File $configLocation
 
     $configInfo = @{}
     $configInfo.Add("configLocation", $configLocation)
@@ -278,23 +271,27 @@ Function UpdateBeetConfig() {
     return $configInfo
 }
 
-Function GetDefaultBeetConfig() {
+Function GetDefaultBeetConfig($artistDirParent) {
     $beetsPlugFolder = GetBeetsPlugFolder
 
     return @(
-       ("directory: {0}" -f ([String] (Get-Location).Path)),
+        "directory: $($artistDirParent)",
         "import:",
         "    move: yes",
         "match:",
         "    strong_rec_thresh: 0.10", #Automatically accept over 90% similar
         "",
-       ("pluginpath: {0}" -f $beetsPlugFolder),
+        "pluginpath: $($beetsPlugFolder)",
         "plugins: fromdirname fromfilename fetchart embedart",
         "embedart:",
         "    remove_art_file: yes",
         "fetchart:",
         "    maxwidth: 512"
     )
+}
+
+Function GetBeetsPlugFolder() {
+    return Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
 }
 
 Function RestoreBeetConfig($configInfo) {
