@@ -76,16 +76,12 @@ Function Get-YoutubeAlbum() {
         $beetConfig = UpdateBeetConfig $initialLocation
         Push-Location # Add current folder to stack
 
-        If (-Not(Test-Path -Path $albumInfo['artist'] -PathType Container)) {
-            New-Item -ItemType Directory -Path $albumInfo['artist'] | Out-Null
-        }
+        CreateNewFolder $albumInfo['artist']
         Set-Location $albumInfo['artist']
         Push-Location # Add artist folder to stack
 
         # Download the audio into the album folder
-        If (-Not(Test-Path -Path $albumInfo['album'] -PathType Container)) {
-            New-Item -ItemType Directory -Path $albumInfo['album'] | Out-Null
-        }
+        CreateNewFolder $albumInfo['album']
         Set-Location $albumInfo['album']
         Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumInfo['album'], $albumInfo['artist']) -ForegroundColor Green
         DownloadAudio $albumManifestContents $noPlaylist
@@ -94,7 +90,6 @@ Function Get-YoutubeAlbum() {
         # Update the music tags
         Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
         beet import $albumInfo['album']
-
         Pop-Location # Pop intial folder from stack
 
         # Remove empty artist folder if beets left one behind
@@ -117,6 +112,12 @@ Function Get-YoutubeAlbum() {
                 Set-Location $initialLocation
             }
         }
+    }
+}
+
+Function CreateNewFolder($folderName) {
+    If (-Not(Test-Path -Path $folderName -PathType Container)) {
+        New-Item -ItemType Directory -Path $folderName | Out-Null
     }
 }
 
