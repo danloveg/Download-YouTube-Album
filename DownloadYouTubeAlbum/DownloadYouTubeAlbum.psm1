@@ -19,8 +19,8 @@ Function Get-YoutubeAlbum() {
     Artist: <artist name>
     https://youtube.com/someplaylist
 
-    .parameter isPlaylist
-    Download YouTube URLs as playlists.
+    .parameter noPlaylist
+    Avoid downloading YouTube URLs as playlists.
 
     .example
     DOWNLOAD ONE PLAYLIST AS AN ALBUM
