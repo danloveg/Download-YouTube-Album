@@ -92,11 +92,7 @@ Function Get-YoutubeAlbum() {
         beet import $albumInfo['album']
         Pop-Location # Pop intial folder from stack
 
-        # Remove empty artist folder if beets left one behind
-        $numItemsInArtistFolder = (Get-ChildItem $albumInfo['artist'] -Recurse | Measure-Object).Count
-        If ($numItemsInArtistFolder -le 1) {
-            Remove-Item -Recurse -Force $albumInfo['artist']
-        }
+        CleanArtistFolderIfEmpty $albumInfo['artist']
     } Catch {
         $e = $_.Exception
         $line = $_.InvocationInfo.ScriptLineNumber
@@ -298,6 +294,13 @@ Function GetBeetsPlugFolder() {
 Function RestoreBeetConfig($configInfo) {
     Write-Host "Restoring your beet config."
     $configInfo["originalContents"] | Out-File $configInfo["configLocation"]
+}
+
+Function CleanArtistFolderIfEmpty($artistFolderName) {
+    $numItemsInArtistFolder = (Get-ChildItem $artistFolderName -Recurse | Measure-Object).Count
+    If ($numItemsInArtistFolder -le 1) {
+        Remove-Item -Recurse -Force $artistFolderName
+    }
 }
 
 Export-ModuleMember -Function @(
