@@ -66,7 +66,7 @@ Function Get-YoutubeAlbum() {
             return
         }
 
-        $albumManifestContents = (Get-Content $albumManifest)
+        $albumManifestContents = GetManifestContents $albumManifest
         If (-Not(VerifyManifestContents($albumManifestContents))) {
             return
         }
@@ -151,6 +151,11 @@ Function VerifyToolsInstalled() {
     }
 
     return $True
+}
+
+Function GetManifestContents($manifestPath) {
+    # Remove lines starting with "#" and empty lines
+    return Get-Content $manifestPath | Select-String -Pattern '^#.+$|^$' -NotMatch
 }
 
 Function VerifyManifestContents([String[]] $contents) {
