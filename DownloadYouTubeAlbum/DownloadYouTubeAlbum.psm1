@@ -154,8 +154,25 @@ Function VerifyToolsInstalled() {
 }
 
 Function GetManifestContents($manifestPath) {
-    # Remove lines starting with "#" and empty lines
-    return Get-Content $manifestPath | Select-String -Pattern '^#.+$|^$' -NotMatch
+    $fileLines = (Get-Content $manifestPath)
+    $fixedLines = @('') * $fileLines.Count
+
+    $count = 0
+    ForEach ($line in $fileLines) {
+        $hashIndex = $line.IndexOf('#')
+        If ($hashIndex -eq -1) {
+            $fixedLines[$count] = $line
+        }
+        ElseIf ($hashIndex -eq 0) {
+            $fixedLines[$count] = ""
+        }
+        Else {
+            $fixedLines[$count] = $line.Substring(0, $hashIndex).Trim()
+        }
+        $count += 1
+    }
+
+    return $fixedLines
 }
 
 Function VerifyManifestContents([String[]] $contents) {
