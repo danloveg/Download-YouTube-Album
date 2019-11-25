@@ -122,8 +122,8 @@ Function VerifyToolsInstalled() {
         Write-Host "Could not find python installation. Go to python.org to install." -ForegroundColor Red
         return $False
     }
-    If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
-        Write-Host "Could not find FFmpeg installation. Go to ffmpeg.org to install." -ForegroundColor Red
+    If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue) -And -Not(Get-Command avconv -ErrorAction -SilentlyContinue)) {
+        Write-Host "Could not find FFmpeg or avconv installation, please install either of these tools." -ForegroundColor Red
         return $False
     }
     If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
@@ -161,7 +161,7 @@ Function GetManifestContents($manifestPath) {
     ForEach ($line in $fileLines) {
         $hashIndex = $line.IndexOf('#')
         If ($hashIndex -eq -1) {
-            $fixedLines[$count] = $line
+            $fixedLines[$count] = $line.Trim()
         }
         ElseIf ($hashIndex -eq 0) {
             $fixedLines[$count] = ""
@@ -263,17 +263,24 @@ Function GetAlbumInfo($contents) {
 }
 
 Function DownloadAudio($albumManifestContents, $noPlaylist) {
-    $urls = ($albumManifestContents | Select-Object -Skip 2)
+    $preferAvconv = $False
+    If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+        $preferAvconv = $True
+    }
+
+    $urls = ($albumManifestContents | Select-Object -Skip 3 | Where-Object {$_ -ne ''})
+
+    $downloadCmd = 'youtube-dl'
+    If ($preferAvconv) {
+        $downloadCmd += ' --prefer-avconv'
+    }
+    If ($noPlaylist) {
+        $downloadCmd += ' --no-playlist'
+    }
+    $downloadCmd += ' -x --audio-format mp3 --output ".\%(title)s.%(ext)s" "{0}"'
 
     Foreach ($url in $urls) {
-        If (-Not([String]::IsNullOrWhiteSpace($url))) {
-            If ($noPlaylist -eq $True) {
-                youtube-dl --no-playlist --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
-            }
-            Else {
-                youtube-dl --extract-audio --audio-format mp3 --output ".\%(title)s.%(ext)s" $url
-            }
-        }
+        Invoke-Expression(($downloadCmd -f $url))
     }
 }
 
