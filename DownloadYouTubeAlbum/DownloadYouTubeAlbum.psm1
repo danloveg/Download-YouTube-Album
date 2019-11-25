@@ -206,14 +206,22 @@ Function VerifyManifestContents([String[]] $contents) {
 
     $thirdLineAndLater = ($contents | Select-Object -Skip 2)
 
+    $numUrls = 0
     Foreach ($line in $thirdLineAndLater) {
         If (-Not([String]::IsNullOrWhiteSpace($line))) {
             $uri = $line -as [System.URI]
             If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
                 Write-Host ("The line `"{0}`" does not appear to be a url" -f $line) -ForegroundColor Red
                 return $False
+            } Else {
+                $numUrls += 1
             }
         }
+    }
+
+    If ($numUrls -eq 0) {
+        Write-Host "Could not find any URLs in the manifest file." -ForegroundColor Red
+        return $False
     }
 
     return $True
