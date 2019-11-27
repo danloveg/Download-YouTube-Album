@@ -268,7 +268,7 @@ Function DownloadAudio($albumManifestContents, $noPlaylist) {
         $preferAvconv = $True
     }
 
-    $urls = ($albumManifestContents | Select-Object -Skip 3 | Where-Object {$_ -ne ''})
+    $urls = ($albumManifestContents | Select-Object -Skip 2 | Where-Object {$_ -ne ''})
 
     $downloadCmd = 'youtube-dl'
     If ($preferAvconv) {
