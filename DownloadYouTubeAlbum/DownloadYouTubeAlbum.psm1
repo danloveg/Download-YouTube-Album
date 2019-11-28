@@ -320,11 +320,13 @@ Function GetDefaultBeetConfig($artistDirParent) {
         "    strong_rec_thresh: 0.10", #Automatically accept over 90% similar
         "",
         "pluginpath: $($beetsPlugFolder)",
-        "plugins: fromdirname fromfilename fetchart embedart",
+        "plugins: fromdirname fromfilename fetchart embedart zero",
         "embedart:",
         "    remove_art_file: yes",
         "fetchart:",
-        "    maxwidth: 512"
+        "    maxwidth: 512",
+        "zero:",
+        "    fields: day month genre"
     )
 }
 
