@@ -70,7 +70,11 @@ Function Get-YoutubeAlbum() {
         If (-Not(VerifyManifestContents($albumManifestContents))) {
             return
         }
+
         $albumInfo = GetAlbumInfo $albumManifestContents
+        If ($albumInfo -eq $NULL) {
+            return
+        }
 
         $initialLocation = (Get-Location).Path
         $beetConfig = UpdateBeetConfig $initialLocation
