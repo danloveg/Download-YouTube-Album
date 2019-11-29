@@ -10,6 +10,7 @@ import re
 
 class FromYoutubeTitlePlugin(BeetsPlugin):
     def __init__(self):
+        super(FromYoutubeTitlePlugin, self).__init__()
         self.register_listener(
             'import_task_start',
             set_titles_no_junk
@@ -23,8 +24,8 @@ def set_titles_no_junk(task, session):
         if item.title: continue
         item_file_path = Path(displayable_path(item.path))
         youtube_title = item_file_path.stem
-        album_name = str(item_file_path.parent.name)
-        artist_name = str(item_file_path.parent.parent.name)
+        album_name = item_file_path.parent.name
+        artist_name = item_file_path.parent.parent.name
         new_title = remove_common_youtube_junk(youtube_title)
         no_junk_title = remove_album_and_artist(new_title, album_name, artist_name)
         item.title = no_junk_title
@@ -45,11 +46,24 @@ def remove_common_youtube_junk(youtube_title):
         match_obj = pattern.search(new_title)
         if match_obj == None: continue
         new_title = new_title.replace(match_obj.group('junk'), '')
-    return new_title.strip()
+    return smart_strip(new_title)
 
 
 def remove_album_and_artist(youtube_title, album, artist):
     new_title = youtube_title
     for name in [f'({album})', album, f'({artist})', artist]:
         new_title = new_title.replace(name, '')
-    return new_title.strip()
+    return smart_strip(new_title)
+
+
+DASH_BEGIN = re.compile(r'^\s?[-_]\s?(?P<title>.+)$')
+DASH_END = re.compile(r'^(?P<title>.+)\s?[-_]\s?$')
+
+
+def smart_strip(string: str):
+    stripped_string = string
+    for pattern in [DASH_BEGIN, DASH_END]:
+        match_obj = pattern.match(stripped_string)
+        if match_obj == None: continue
+        stripped_string = match_obj.group('title')
+    return stripped_string.strip()
