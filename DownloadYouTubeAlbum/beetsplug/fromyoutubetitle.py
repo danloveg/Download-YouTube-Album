@@ -1,5 +1,11 @@
-""" If the title is empty, set the title to the name of the file, and remove any
-extra junk such as (Official Video) or (Audio)
+""" If the title is empty, set the title to the name of the file without any
+junk, which can include:
+(Official Video)
+{Audio}
+(Music Video)
+[ New 2019 ]
+Artist Name
+Album Name
 """
 
 from __future__ import division, absolute_import, print_function
@@ -32,11 +38,11 @@ def set_titles_no_junk(task, session):
 
 
 YOUTUBE_TITLE_JUNK = [
-    re.compile(r'(?P<junk>[\(\[\{](?:[Oo]fficial\s)?(?:[Mm]usic\s)?[Vv]ideo[\)\]\}])'),
-    re.compile(r'(?P<junk>[\(\[\{](?:[Oo]fficial\s)?[Aa]udio[\)\]\}])'),
-    re.compile(r'(?P<junk>[\(\[\{](?:[Oo]fficial\s)?[Ll]yrics?(?:\s[Vv]ideo)?[\)\]\}])'),
-    re.compile(r'(?P<junk>[\(\[\{][Ff]ull\s[Aa]lbum(?:\s[Ss]tream)[\)\]\}])'),
-    re.compile(r'(?P<junk>[\(\[\{](?:[Nn][Ee][Ww]\s)?\d{4}[\)\]\}])'),
+    re.compile(r'(?P<junk>[\(\[\{]\s*(?:[Oo]fficial\s)?(?:[Mm]usic\s)?[Vv]ideo\s*[\)\]\}])'),
+    re.compile(r'(?P<junk>[\(\[\{]\s*(?:[Oo]fficial\s)?[Aa]udio\s*[\)\]\}])'),
+    re.compile(r'(?P<junk>[\(\[\{]\s*(?:[Oo]fficial\s)?[Ll]yrics?(?:\s[Vv]ideo)?\s*[\)\]\}])'),
+    re.compile(r'(?P<junk>[\(\[\{]\s*[Ff]ull\s[Aa]lbum(?:\s[Ss]tream)\s*[\)\]\}])'),
+    re.compile(r'(?P<junk>[\(\[\{]\s*(?:[Nn][Ee][Ww]\s)?\d{4}\s*[\)\]\}])'),
 ]
 
 
