@@ -62,13 +62,15 @@ def remove_album_and_artist(youtube_title, album, artist):
     return smart_strip(new_title)
 
 
-DASH_BEGIN = re.compile(r'^\s?[-_]\s?(?P<title>.+)$')
-DASH_END = re.compile(r'^(?P<title>.+)\s?[-_]\s?$')
+EXTRA_STRIP_PATTERNS = [
+    re.compile(r'^\s?[-_]\s?(?P<title>.+)$'),
+    re.compile(r'^(?P<title>.+)\s?[-_]\s?$')
+]
 
 
 def smart_strip(string: str):
     stripped_string = string
-    for pattern in [DASH_BEGIN, DASH_END]:
+    for pattern in EXTRA_STRIP_PATTERNS:
         match_obj = pattern.match(stripped_string)
         if match_obj == None: continue
         stripped_string = match_obj.group('title')
