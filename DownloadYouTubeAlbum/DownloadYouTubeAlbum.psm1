@@ -320,7 +320,7 @@ Function GetDefaultBeetConfig($artistDirParent) {
         "    strong_rec_thresh: 0.10", #Automatically accept over 90% similar
         "",
         "pluginpath: $($beetsPlugFolder)",
-        "plugins: fromdirname fromfilename fetchart embedart zero",
+        "plugins: fromdirname fromyoutubetitle fetchart embedart zero",
         "embedart:",
         "    remove_art_file: yes",
         "fetchart:",
