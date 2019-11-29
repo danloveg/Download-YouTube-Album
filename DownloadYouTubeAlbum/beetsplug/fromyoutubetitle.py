@@ -62,8 +62,8 @@ def remove_album_and_artist(youtube_title, album, artist):
 
 
 EXTRA_STRIP_PATTERNS = [
-    re.compile(r'^\s?[-_]\s?(?P<title>.+)$'),
-    re.compile(r'^(?P<title>.+)\s?[-_]\s?$')
+    re.compile(r'^\s*[-_]\s*(?P<title>.+)$'),
+    re.compile(r'^(?P<title>.+)\s*[-_]\s*$')
 ]
 
 
