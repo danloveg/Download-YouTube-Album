@@ -37,11 +37,11 @@ def set_titles_no_junk(task, session):
 
 
 YOUTUBE_TITLE_JUNK = [
-    re.compile(r'(?P<junk>[\(\[\{]\s*(?:[Oo]fficial\s)?(?:[Mm]usic\s)?[Vv]ideo\s*[\)\]\}])'),
-    re.compile(r'(?P<junk>[\(\[\{]\s*(?:[Oo]fficial\s)?[Aa]udio\s*[\)\]\}])'),
-    re.compile(r'(?P<junk>[\(\[\{]\s*(?:[Oo]fficial\s)?[Ll]yrics?(?:\s[Vv]ideo)?\s*[\)\]\}])'),
-    re.compile(r'(?P<junk>[\(\[\{]\s*[Ff]ull\s[Aa]lbum(?:\s[Ss]tream)\s*[\)\]\}])'),
-    re.compile(r'(?P<junk>[\(\[\{]\s*(?:[Nn][Ee][Ww]\s)?\d{4}\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?(?:Music\s)?Video\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?Audio\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?Lyrics?(?:\sVideo)?\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*Full\sAlbum(?:\sStream)\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:New\s)?\d{4}\s*[\)\]\}])'),
 ]
 
 
