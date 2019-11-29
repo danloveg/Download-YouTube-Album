@@ -3,7 +3,6 @@ the directories the file is in. Looks above the file for the album, and above
 the album for the artist name.
 """
 
-from __future__ import division, absolute_import, print_function
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
 from pathlib import Path
