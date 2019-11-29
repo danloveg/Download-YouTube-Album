@@ -22,20 +22,6 @@ class FromYoutubeTitlePlugin(BeetsPlugin):
         )
 
 
-def set_titles_no_junk(task, session):
-    items = task.items if task.is_album else [task.item]
-
-    for item in items:
-        if item.title: continue
-        item_file_path = Path(displayable_path(item.path))
-        youtube_title = item_file_path.stem
-        album_name = item_file_path.parent.name
-        artist_name = item_file_path.parent.parent.name
-        new_title = remove_common_youtube_junk(youtube_title)
-        no_junk_title = remove_album_and_artist(new_title, album_name, artist_name)
-        item.title = no_junk_title
-
-
 YOUTUBE_TITLE_JUNK = [
     re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?(?:Music\s)?Video\s*[\)\]\}])'),
     re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?Audio\s*[\)\]\}])'),
@@ -45,7 +31,35 @@ YOUTUBE_TITLE_JUNK = [
 ]
 
 
-def remove_common_youtube_junk(youtube_title):
+EXTRA_STRIP_PATTERNS = [
+    re.compile(r'^\s*[-_]\s*(?P<title>.+)$'),
+    re.compile(r'^(?P<title>.+)\s*[-_]\s*$')
+]
+
+
+def set_titles_no_junk(task, session):
+    items = task.items if task.is_album else [task.item]
+
+    for item in items:
+        if item.title: continue
+        item_file_path = Path(displayable_path(item.path))
+        youtube_title = item_file_path.stem
+        album_name = get_album_name_from_path(item_file_path)
+        artist_name = get_artist_name_from_path(item_file_path)
+        new_title = remove_common_youtube_junk(youtube_title)
+        no_junk_title = remove_album_and_artist(new_title, album_name, artist_name)
+        item.title = no_junk_title
+
+
+def get_album_name_from_path(p: Path):
+    return p.parent.stem
+
+
+def get_artist_name_from_path(p: Path):
+    return p.parent.parent.stem
+
+
+def remove_common_youtube_junk(youtube_title: str):
     new_title = youtube_title
     for pattern in YOUTUBE_TITLE_JUNK:
         match_obj = pattern.search(new_title)
@@ -54,17 +68,11 @@ def remove_common_youtube_junk(youtube_title):
     return smart_strip(new_title)
 
 
-def remove_album_and_artist(youtube_title, album, artist):
+def remove_album_and_artist(youtube_title: str, album: str, artist: str):
     new_title = youtube_title
     for name in [f'({album})', album, f'({artist})', artist]:
         new_title = new_title.replace(name, '')
     return smart_strip(new_title)
-
-
-EXTRA_STRIP_PATTERNS = [
-    re.compile(r'^\s*[-_]\s*(?P<title>.+)$'),
-    re.compile(r'^(?P<title>.+)\s*[-_]\s*$')
-]
 
 
 def smart_strip(string: str):
