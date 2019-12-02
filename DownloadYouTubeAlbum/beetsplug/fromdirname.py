@@ -3,9 +3,12 @@ the directories the file is in. Looks above the file for the album, and above
 the album for the artist name.
 """
 
+from pathlib import Path
+
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
-from pathlib import Path
+
+import tagsfrompath as frompath
 
 
 class FromDirectoryNamePlugin(BeetsPlugin):
@@ -22,12 +25,8 @@ def update_album_artist_with_dirnames(task, session):
             continue
 
         file_path = Path(displayable_path(item.path))
-
-        # The album name is assumed to be the parent of the file
-        album_name = str(file_path.parent.name)
-
-        # The artist name is assumed to be the parent of the album
-        artist_name = str(file_path.parent.parent.name)
+        album_name = frompath.get_album_name(file_path)
+        artist_name = frompath.get_artist_name(file_path)
 
         if not item.album:
             item.album = album_name

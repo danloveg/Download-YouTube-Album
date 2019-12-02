@@ -1,8 +1,12 @@
 """ fromyoutubetitle Beets Plugin """
+
 from pathlib import Path
 import re
+
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
+
+import tagsfrompath as frompath
 
 
 class FromYoutubeTitlePlugin(BeetsPlugin):
@@ -48,44 +52,29 @@ def set_titles_no_junk(task, session):
         if item.title:
             continue
         item_file_path = Path(displayable_path(item.path))
-        youtube_title = get_title_from_path(item_file_path)
-        album_name = get_album_name_from_path(item_file_path)
-        artist_name = get_artist_name_from_path(item_file_path)
-        new_title = remove_common_youtube_junk(youtube_title)
-        no_junk_title = remove_album_and_artist(new_title, album_name, artist_name)
-        item.title = no_junk_title
+        youtube_title = frompath.get_title(item_file_path)
+        album_name = frompath.get_album_name(item_file_path)
+        artist_name = frompath.get_artist_name(item_file_path)
+        artist_album_junk = [
+            f'(?i)(?P<junk>\\({album_name}\\))',
+            f'(?i)(?P<junk>\\(?{artist_name}\\)?)'
+        ]
+        item.title = remove_junk(youtube_title, artist_album_junk, YOUTUBE_TITLE_JUNK)
 
 
-def get_title_from_path(p: Path):
-    return p.stem
+def remove_junk(title: str, *junk_patterns):
+    new_title = title
 
+    for pattern_list in junk_patterns:
+        for pattern in pattern_list:
+            match_obj = None
+            if isinstance(pattern, re.Pattern):
+                match_obj = pattern.search(new_title)
+            elif isinstance(pattern, str):
+                match_obj = re.search(pattern, title)
+            if match_obj is not None:
+                new_title = new_title.replace(match_obj.group('junk'), '')
 
-def get_album_name_from_path(p: Path):
-    return p.parent.name
-
-
-def get_artist_name_from_path(p: Path):
-    return p.parent.parent.name
-
-
-def remove_common_youtube_junk(youtube_title: str):
-    new_title = youtube_title
-    for pattern in YOUTUBE_TITLE_JUNK:
-        match_obj = pattern.search(new_title)
-        if match_obj is None:
-            continue
-        new_title = new_title.replace(match_obj.group('junk'), '')
-    return smart_strip(new_title)
-
-
-def remove_album_and_artist(youtube_title: str, album: str, artist: str):
-    new_title = youtube_title
-    album_match = re.search(f'(?i)(?P<remove>\\({album}\\))', new_title)
-    if album_match is not None:
-        new_title = new_title.replace(album_match.group('remove'), '')
-    artist_match = re.search(f'(?i)(?P<remove>\\(?{artist}\\)?)', new_title)
-    if artist_match is not None:
-        new_title = new_title.replace(artist_match.group('remove'), '')
     return smart_strip(new_title)
 
 
