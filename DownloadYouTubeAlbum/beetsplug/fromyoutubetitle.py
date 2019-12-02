@@ -41,7 +41,7 @@ EXTRA_STRIP_PATTERNS = [
 ]
 
 
-def set_titles_no_junk(task, _):
+def set_titles_no_junk(task, session):
     items = task.items if task.is_album else [task.item]
 
     for item in items:
@@ -80,9 +80,12 @@ def remove_common_youtube_junk(youtube_title: str):
 
 def remove_album_and_artist(youtube_title: str, album: str, artist: str):
     new_title = youtube_title
-    for name in [f'({album})', f'({artist})', artist]:
-        if name in new_title:
-            new_title = new_title.replace(name, '')
+    album_match = re.search(f'(?i)(?P<remove>\\({album}\\))', new_title)
+    if album_match is not None:
+        new_title = new_title.replace(album_match.group('remove'), '')
+    artist_match = re.search(f'(?i)(?P<remove>\\(?{artist}\\)?)', new_title)
+    if artist_match is not None:
+        new_title = new_title.replace(artist_match.group('remove'), '')
     return smart_strip(new_title)
 
 
