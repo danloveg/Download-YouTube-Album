@@ -16,18 +16,21 @@ import re
 class FromYoutubeTitlePlugin(BeetsPlugin):
     def __init__(self):
         super(FromYoutubeTitlePlugin, self).__init__()
-        self.register_listener(
-            'import_task_start',
-            set_titles_no_junk
-        )
+        self.register_listener('import_task_start', set_titles_no_junk)
 
 
 YOUTUBE_TITLE_JUNK = [
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*Official\s*[\)\]\}])'),
     re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?(?:Music\s)?Video\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?Audio\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?Lyrics?(?:\sVideo)?\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*Full\sAlbum(?:\sStream)\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s|Original\s)?Audio\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?Lyrics?(?:\sVideo|\sOn\sScreen)?\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*Lyrics,\sAudio\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*Full\s(?:Album|Song)(?:\sStream)\s*[\)\]\}])'),
     re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:New\s)?\d{4}\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*iTunes.*?\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Explicit(?:\sVersion)?|Clean(?:\sVersion)?|Parental\sAdvisory)\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:New\s)?(?:HQ|HD|CDQ)(?:\sVersion)?\s*[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*New\sSong(?:\s\d{4})?\s*[\)\]\}])')
 ]
 
 
