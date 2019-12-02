@@ -27,9 +27,6 @@ def update_album_artist_with_dirnames(task, session):
         file_path = Path(displayable_path(item.path))
 
         if not item.album:
-            album_name = frompath.get_album_name(file_path)
-            item.album = album_name
-
+            item.album = frompath.get_album_name(file_path)
         if not item.artist:
-            artist_name = frompath.get_artist_name(file_path)
-            item.artist = artist_name
+            item.artist = frompath.get_artist_name(file_path)
