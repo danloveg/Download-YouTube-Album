@@ -6,8 +6,8 @@ Function Get-YoutubeAlbum() {
     editing the metadata by hand.
 
     .description
-    Use youtube-dl to download a list of mp3s from URLs, then use beets tool to
-    automatically update metadata and album art.
+    Use youtube-dl to download a list of m4a files (or mp3s) from URLs, then use
+    beets tool to automatically update metadata and album art.
 
     .parameter albumManifest
     A text file containing information required to download and create an album.
@@ -21,6 +21,9 @@ Function Get-YoutubeAlbum() {
 
     .parameter noPlaylist
     Avoid downloading YouTube URLs as playlists.
+
+    .parameter preferMP3
+    Encode downloaded audio as MP3, rather than the default m4a.
 
     .example
     DOWNLOAD ONE PLAYLIST AS AN ALBUM
@@ -51,7 +54,8 @@ Function Get-YoutubeAlbum() {
     #>
     Param(
         [Parameter(Mandatory=$True)] [String] $albumManifest,
-        [Switch] $noPlaylist = $False
+        [Switch] $noPlaylist = $False,
+        [Switch] $preferMP3 = $False
     )
 
     $beetConfig = $NULL
@@ -88,7 +92,7 @@ Function Get-YoutubeAlbum() {
         CreateNewFolder $albumInfo['album']
         Set-Location $albumInfo['album']
         Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumInfo['album'], $albumInfo['artist']) -ForegroundColor Green
-        DownloadAudio $albumManifestContents $noPlaylist
+        DownloadAudio $albumManifestContents $noPlaylist $preferMP3
         Pop-Location # Pop artist folder from stack
 
         # Update the music tags
@@ -266,14 +270,11 @@ Function GetAlbumInfo($contents) {
     return $albumInfo
 }
 
-Function DownloadAudio($albumManifestContents, $noPlaylist) {
+Function DownloadAudio($albumManifestContents, $noPlaylist, $preferMP3) {
     $preferAvconv = $False
     If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
         $preferAvconv = $True
     }
-
-    $urls = ($albumManifestContents | Select-Object -Skip 2 | Where-Object {$_ -ne ''})
-
     $downloadCmd = 'youtube-dl'
     If ($preferAvconv) {
         $downloadCmd += ' --prefer-avconv'
@@ -281,8 +282,16 @@ Function DownloadAudio($albumManifestContents, $noPlaylist) {
     If ($noPlaylist) {
         $downloadCmd += ' --no-playlist'
     }
-    $downloadCmd += ' -x --audio-format mp3 --output ".\%(title)s.%(ext)s" "{0}"'
+    $downloadCmd += ' -x --audio-format'
+    If ($preferMP3) {
+        $downloadCmd += ' mp3'
+    }
+    Else {
+        $downloadCmd += ' m4a'
+    }
+    $downloadCmd += ' --output ".\%(title)s.%(ext)s" "{0}"'
 
+    $urls = ($albumManifestContents | Select-Object -Skip 2 | Where-Object {$_ -ne ''})
     Foreach ($url in $urls) {
         Invoke-Expression(($downloadCmd -f $url))
     }
