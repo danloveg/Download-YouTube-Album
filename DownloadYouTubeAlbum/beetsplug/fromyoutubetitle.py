@@ -43,7 +43,7 @@ def set_titles_no_junk(task, session):
     for item in items:
         if item.title: continue
         item_file_path = Path(displayable_path(item.path))
-        youtube_title = item_file_path.stem
+        youtube_title = get_title_from_path(item_file_path)
         album_name = get_album_name_from_path(item_file_path)
         artist_name = get_artist_name_from_path(item_file_path)
         new_title = remove_common_youtube_junk(youtube_title)
@@ -51,12 +51,16 @@ def set_titles_no_junk(task, session):
         item.title = no_junk_title
 
 
+def get_title_from_path(p: Path):
+    return p.stem
+
+
 def get_album_name_from_path(p: Path):
-    return p.parent.stem
+    return p.parent.name
 
 
 def get_artist_name_from_path(p: Path):
-    return p.parent.parent.stem
+    return p.parent.parent.name
 
 
 def remove_common_youtube_junk(youtube_title: str):
@@ -70,8 +74,9 @@ def remove_common_youtube_junk(youtube_title: str):
 
 def remove_album_and_artist(youtube_title: str, album: str, artist: str):
     new_title = youtube_title
-    for name in [f'({album})', album, f'({artist})', artist]:
-        new_title = new_title.replace(name, '')
+    for name in [f'({album})', f'({artist})', artist]:
+        if name in new_title:
+            new_title = new_title.replace(name, '')
     return smart_strip(new_title)
 
 

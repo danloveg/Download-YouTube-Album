@@ -76,7 +76,7 @@ Function Get-YoutubeAlbum() {
         }
 
         $albumInfo = GetAlbumInfo $albumManifestContents
-        If ($albumInfo -eq $NULL) {
+        If ($NULL -eq $albumInfo) {
             return
         }
 
