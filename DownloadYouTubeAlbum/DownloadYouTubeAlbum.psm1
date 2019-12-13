@@ -162,9 +162,9 @@ Function GetContentsWithoutComments($filePath) {
     $noComments = [System.Collections.ArrayList] @()
 
     ForEach ($line in $fileLines) {
-        $index = $string.IndexOf('#')
+        $index = $line.IndexOf('#')
         If ($index -eq -1) {
-            $index = $string.Length
+            $index = $line.Length
         }
         $noComments.Add($line.Substring(0, $index).Trim()) | Out-Null
     }
