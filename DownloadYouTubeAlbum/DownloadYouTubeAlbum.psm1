@@ -159,24 +159,19 @@ Function VerifyToolsInstalled {
 
 Function GetContentsWithoutComments($filePath) {
     $fileLines = (Get-Content $filePath)
-    $fixedLines = @('') * $fileLines.Count
+    $noComments = [System.Collections.ArrayList] @()
 
-    $count = 0
     ForEach ($line in $fileLines) {
         $hashIndex = $line.IndexOf('#')
         If ($hashIndex -eq -1) {
-            $fixedLines[$count] = $line.Trim()
-        }
-        ElseIf ($hashIndex -eq 0) {
-            $fixedLines[$count] = ""
+            $noComments.Add($line.Trim()) | Out-Null
         }
         Else {
-            $fixedLines[$count] = $line.Substring(0, $hashIndex).Trim()
+            $noComments.Add($line.Substring(0, $hashIndex).Trim()) | Out-Null
         }
-        $count += 1
     }
 
-    return $fixedLines
+    return $noComments
 }
 
 Function GetAlbumData($contents) {
