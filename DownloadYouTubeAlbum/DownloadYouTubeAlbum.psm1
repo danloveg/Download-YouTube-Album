@@ -70,13 +70,9 @@ Function Get-YoutubeAlbum() {
             return
         }
 
-        $albumManifestContents = GetManifestContents $albumManifest
-        If (-Not(VerifyManifestContents($albumManifestContents))) {
-            return
-        }
-
-        $albumInfo = GetAlbumInfo $albumManifestContents
-        If ($NULL -eq $albumInfo) {
+        $albumManifestContents = GetContentsWithoutComments $albumManifest
+        $albumData = GetAlbumData $albumManifestContents
+        If ($Null -eq $albumData) {
             return
         }
 
@@ -84,23 +80,23 @@ Function Get-YoutubeAlbum() {
         $beetConfig = UpdateBeetConfig $initialLocation
         Push-Location # Add current folder to stack
 
-        CreateNewFolder $albumInfo['artist']
-        Set-Location $albumInfo['artist']
+        CreateNewFolder $albumData['artist']
+        Set-Location $albumData['artist']
         Push-Location # Add artist folder to stack
 
         # Download the audio into the album folder
-        CreateNewFolder $albumInfo['album']
-        Set-Location $albumInfo['album']
-        Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumInfo['album'], $albumInfo['artist']) -ForegroundColor Green
-        DownloadAudio $albumManifestContents $noPlaylist $preferMP3
+        CreateNewFolder $albumData['album']
+        Set-Location $albumData['album']
+        Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumData['album'], $albumData['artist']) -ForegroundColor Green
+        DownloadAudio $albumData['urls'] $noPlaylist $preferMP3
         Pop-Location # Pop artist folder from stack
 
         # Update the music tags
         Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
-        beet import $albumInfo['album']
+        beet import $albumData['album']
         Pop-Location # Pop intial folder from stack
 
-        CleanArtistFolderIfEmpty $albumInfo['artist']
+        CleanArtistFolderIfEmpty $albumData['artist']
     } Catch {
         $e = $_.Exception
         $line = $_.InvocationInfo.ScriptLineNumber
@@ -125,7 +121,7 @@ Function CreateNewFolder($folderName) {
     }
 }
 
-Function VerifyToolsInstalled() {
+Function VerifyToolsInstalled {
     If (-Not(Get-Command python -ErrorAction SilentlyContinue)) {
         Write-Host "Could not find python installation. Go to python.org to install." -ForegroundColor Red
         return $False
@@ -161,8 +157,8 @@ Function VerifyToolsInstalled() {
     return $True
 }
 
-Function GetManifestContents($manifestPath) {
-    $fileLines = (Get-Content $manifestPath)
+Function GetContentsWithoutComments($filePath) {
+    $fileLines = (Get-Content $filePath)
     $fixedLines = @('') * $fileLines.Count
 
     $count = 0
@@ -183,45 +179,43 @@ Function GetManifestContents($manifestPath) {
     return $fixedLines
 }
 
-Function VerifyManifestContents([String[]] $contents) {
-    If ($contents.Length -eq 0) {
-        Write-Host "Album manifest file appears to be empty." -ForegroundColor Red
-        return $False
-    }
-    If ($contents.Length -lt 3) {
-        Write-Host "Album manifest file requires at least three lines for artist, album, and URL" -ForegroundColor Red
-    }
+Function GetAlbumData($contents) {
+    $artistName = ''
+    $albumName = ''
+    $urlList = [System.Collections.ArrayList] @()
 
-    $firstLine = $contents[0]
-    $secondLine = $contents[1]
+    $validLines = $contents | Where-Object { $_ -NotMatch '^$|^#.*$' }
+    $firstLine = $validLines | Select-Object -First 1
+    $secondLine = $validLines | Select-Object -Skip 1 -First 1
 
-    If ($firstLine -Match "^[Aa]rtist:\s*.+$") {
-        If ($secondLine -NotMatch "^[Aa]lbum:\s*.+$") {
-            Write-Host "Second line of manifest file must start with 'Album:'" -ForegroundColor Red
-            return $False
+    ForEach ($line in @($firstLine, $secondLine)) {
+        $artistMatch = [Regex]::Match($line, '(?i)^artist:\s+(.+)$')
+        If ($artistMatch.Success) {
+            $artistName = ([String] $artistMatch.Groups[1].Value).Trim()
+            Continue
+        }
+        $albumMatch = [Regex]::Match($line, '(?i)^album:\s+(.+)$')
+        If ($albumMatch.Success) {
+            $albumName = ([String] $albumMatch.Groups[1].Value).Trim()
         }
     }
-    ElseIf ($firstLine -Match "^[Aa]lbum:\s*.+$") {
-        If ($secondLine -NotMatch "^[Aa]rtist:\s*.+$") {
-            Write-Host "Second line of manifest file must start with 'Artist:'" -ForegroundColor Red
-            return $False
-        }
-    }
-    Else {
-        Write-Host "First line of manifest file must start with 'Album:' or 'Artist:'" -ForegroundColor Red
-        return $False
+
+    If ($artistName -eq '' -Or $albumName -eq '') {
+        Write-Host "Could not find album and artist name in manifest." -ForegroundColor Red
+        return $Null
     }
 
-    $thirdLineAndLater = ($contents | Select-Object -Skip 2)
+    $linesAfterAlbumAndArtist = $contents | Select-Object -Skip ($contents.IndexOf($secondLine) + 1)
 
     $numUrls = 0
-    Foreach ($line in $thirdLineAndLater) {
+    Foreach ($line in $linesAfterAlbumAndArtist) {
         If (-Not([String]::IsNullOrWhiteSpace($line))) {
             $uri = $line -as [System.URI]
             If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
-                Write-Host ("The line `"{0}`" does not appear to be a url" -f $line) -ForegroundColor Red
-                return $False
+                Write-Host ("`"{0}`" does not appear to be a url." -f $line) -ForegroundColor Red
+                return $Null
             } Else {
+                $urlList.Add($line) | Out-Null
                 $numUrls += 1
             }
         }
@@ -229,48 +223,17 @@ Function VerifyManifestContents([String[]] $contents) {
 
     If ($numUrls -eq 0) {
         Write-Host "Could not find any URLs in the manifest file." -ForegroundColor Red
-        return $False
+        return $Null
     }
 
-    return $True
+    $albumData = @{}
+    $albumData.Add("artist", $artistName)
+    $albumData.Add("album", $albumName)
+    $albumData.Add("urls", $urlList)
+    return $albumData
 }
 
-Function GetAlbumInfo($contents) {
-    $firstLine = $contents[0]
-    $secondLine = $contents[1]
-
-    $ArtistName = ''
-    $AlbumName = ''
-
-    $artistMatch = "^[Aa]rtist:\s*(.+)$"
-    $albumMatch = "^[Aa]lbum:\s*(.+)$"
-
-    $firstLineArtistMatch = [Regex]::Match($firstLine, $artistMatch)
-    $firstLineAlbumMatch = [Regex]::Match($firstLine, $albumMatch)
-
-    If ($firstLineArtistMatch.Success) {
-        $ArtistName = ([String] $firstLineArtistMatch.Groups[1].Value).Trim()
-        $secondLineAlbumMatch = [Regex]::Match($secondLine, $albumMatch)
-        $AlbumName = ([String] $secondLineAlbumMatch.Groups[1].Value).Trim()
-    }
-    ElseIf ($firstLineAlbumMatch.Success) {
-        $AlbumName = ([String] $firstLineAlbumMatch.Groups[1].Value).Trim()
-        $secondLineArtistMatch = [Regex]::Match($secondLine, $artistMatch)
-        $ArtistName = ([String] $secondLineArtistMatch.Groups[1].Value).Trim()
-    }
-    Else {
-        Write-Host "Error getting album info. Could not find 'Artist:' or 'Album:' in first line of manifest." -ForegroundColor Red
-        return $NULL
-    }
-
-    $albumInfo = @{}
-    $albumInfo.Add("artist", $ArtistName)
-    $albumInfo.Add("album", $AlbumName)
-
-    return $albumInfo
-}
-
-Function DownloadAudio($albumManifestContents, $noPlaylist, $preferMP3) {
+Function DownloadAudio($urls, $noPlaylist, $preferMP3) {
     $preferAvconv = $False
     If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
         $preferAvconv = $True
@@ -291,7 +254,6 @@ Function DownloadAudio($albumManifestContents, $noPlaylist, $preferMP3) {
     }
     $downloadCmd += ' --output ".\%(title)s.%(ext)s" "{0}"'
 
-    $urls = ($albumManifestContents | Select-Object -Skip 2 | Where-Object {$_ -ne ''})
     Foreach ($url in $urls) {
         Invoke-Expression(($downloadCmd -f $url))
     }
