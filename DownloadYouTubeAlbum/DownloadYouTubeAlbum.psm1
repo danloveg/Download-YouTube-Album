@@ -258,7 +258,7 @@ Function UpdateBeetConfig($artistDirParent) {
 
     If (-Not (Test-Path -Path $configLocation -PathType Leaf)) {
         Write-Host ("Creating a new beet default config file.")
-        New-Item -ItemType File -Path $configLocation
+        New-Item -ItemType File -Path $configLocation | Out-Null
     }
     Else {
         Write-Host ("Overwriting beet config, to be restored after processing.")
