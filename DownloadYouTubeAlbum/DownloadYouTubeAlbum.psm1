@@ -281,7 +281,9 @@ Function GetDefaultBeetConfig($artistDirParent) {
         "import:",
         "    move: yes",
         "match:",
-        "    strong_rec_thresh: 0.10", #Automatically accept over 90% similar
+        "    strong_rec_thresh: 0.10", # Automatically accept over 90% similar
+        "    max_rec:",
+        "        missing_tracks: strong", # Don't worry so much about missing tracks
         "",
         "pluginpath: $($beetsPlugFolder)",
         "plugins: fromdirname fromyoutubetitle fetchart embedart zero",
