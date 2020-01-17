@@ -40,8 +40,8 @@ YOUTUBE_TITLE_JUNK = [
 
 
 EXTRA_STRIP_PATTERNS = [
-    re.compile(r'^\s*[-_]\s*(?P<title>.+)$'),
-    re.compile(r'^(?P<title>.+)\s*[-_]\s*$')
+    re.compile(r'^\s*[-_\|]\s*(?P<title>.+)$'),
+    re.compile(r'^(?P<title>.+)\s*[-_\|]\s*$')
 ]
 
 
@@ -56,8 +56,8 @@ def set_titles_no_junk(task, session):
         album_name = frompath.get_album_name(item_file_path)
         artist_name = frompath.get_artist_name(item_file_path)
         artist_album_junk = [
-            f'(?i)(?P<junk>\\({album_name}\\))',
-            f'(?i)(?P<junk>\\(?{artist_name}\\)?)'
+            '(?i)(?P<junk>\\({0}\\))'.format(re.escape(album_name)),
+            '(?i)(?P<junk>\\(?{0}\\)?)'.format(re.escape(artist_name))
         ]
         item.title = remove_junk(youtube_title, artist_album_junk, YOUTUBE_TITLE_JUNK)
 
