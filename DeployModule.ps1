@@ -35,3 +35,10 @@ ForEach ($sourceFile in $sourceFiles) {
 
 Write-Host "All changes deployed."
 Write-Host "$($filesUpdated) Files updated."
+
+$profileContents = Get-Content $Profile -Raw
+If (-Not ($profileContents -Match $MODULE_NAME)) {
+    Write-Host "`nWARNING: It appears that you have not imported $($MODULE_NAME) in your PowerShell profile." -ForegroundColor Yellow
+    Write-Host "Add the following line to your PowerShell profile ($($Profile)):"
+    Write-Host "Import-Module $($MODULE_NAME)"
+}
