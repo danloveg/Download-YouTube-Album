@@ -23,14 +23,20 @@ https://youtube.com/link_to_album_playlist_on_youtube
 
 ## How to Install It
 
-This is how you install it.
+[First, make sure you have a PowerShell profile.](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles?view=powershell-7#how-to-create-a-profile)
+
+Download or clone this repository, and run the included `DeployModule.ps1` script. This copies the contents of the repository into your PowerShell Modules folder. You will also need to import the module in your PowerShell profile by adding the line `Import-Module DownloadYouTubeAlbum` to it. Without telling PowerShell to import it in your profile, the code will not be loaded when you launch PowerShell.
+
+The deploy script will tell you which file you need to add the line to.
+
+If you plan on doing any development to the code, the `DeployModule.ps1` script is super useful to keep your PowerShell Modules up to date with the latest code.
 
 ### Dependencies
 
 The following programs must be installed manually for `Get-YouTubeAlbum` to work:
 
 - [python](https://python.org)
-- [ffmpeg](https://ffmpeg.org) : youtube-dl uses this to convert downloaded audio into mp3 format.
+- [ffmpeg](https://ffmpeg.org) : youtube-dl uses this to convert downloaded audio into m4a or mp3 format.
 
 The following programs are installed automatically if you don't have it, using Python's `pip`
 
