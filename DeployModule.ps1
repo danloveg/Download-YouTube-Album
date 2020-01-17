@@ -1,4 +1,4 @@
-$ModuleName = "DownloadYouTubeAlbum"
+$MODULE_NAME = "DownloadYouTubeAlbum"
 
 If (-Not (Test-Path $Profile -ErrorAction SilentlyContinue)) {
     Write-Host "Create a PowerShell profile first before deploying." -ForegroundColor Red
@@ -6,11 +6,15 @@ If (-Not (Test-Path $Profile -ErrorAction SilentlyContinue)) {
 }
 
 $profileFolder = (Get-Item $Profile).Directory
-$destinationFolder = Join-Path -Path $profileFolder -ChildPath "Modules/$($ModuleName)"
+$destinationFolder = Join-Path -Path $profileFolder -ChildPath "Modules/$($MODULE_NAME)"
 $sourceFolder = Join-Path (Get-Item $PSScriptRoot) -ChildPath "DownloadYouTubeAlbum"
 
+If (-Not (Test-Path $destinationFolder -PathType Container)) {
+    New-Item $destinationFolder -ItemType Directory -Force | Out-Null
+}
+
 $filesUpdated = 0
-Write-Host "Deploying module files to $($destinationFolder)"
+Write-Host "Deploying $($MODULE_NAME) module files to $($destinationFolder)"
 $sourceFiles = Get-ChildItem -Recurse -File -Path $sourceFolder -Exclude "*.pyc"
 ForEach ($sourceFile in $sourceFiles) {
     $destinationFile = $sourceFile.FullName.Replace($sourceFolder, $destinationFolder)
