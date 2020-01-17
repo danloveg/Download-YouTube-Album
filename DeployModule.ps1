@@ -1,3 +1,16 @@
+<#
+ # Purpose: Allows the user's PowerShell modules to be up to date with the
+ # current working contents of this repository.
+ #
+ # This script deploys the contents of the MODULE_NAME folder to the user's
+ # PowerShell modules folder. It checks to see if file contents are different
+ # before overwriting the outdated files.
+ #
+ # If you want to use this script for a different PowerShell module, you
+ # simply would need to change $MODULE_NAME and put the script one level
+ # above the module you are targeting.
+ #>
+
 $MODULE_NAME = "DownloadYouTubeAlbum"
 
 If (-Not (Test-Path $Profile -ErrorAction SilentlyContinue)) {
@@ -7,7 +20,7 @@ If (-Not (Test-Path $Profile -ErrorAction SilentlyContinue)) {
 
 $profileFolder = (Get-Item $Profile).Directory
 $destinationFolder = Join-Path -Path $profileFolder -ChildPath "Modules/$($MODULE_NAME)"
-$sourceFolder = Join-Path (Get-Item $PSScriptRoot) -ChildPath "DownloadYouTubeAlbum"
+$sourceFolder = Join-Path (Get-Item $PSScriptRoot) -ChildPath $MODULE_NAME
 
 If (-Not (Test-Path $destinationFolder -PathType Container)) {
     New-Item $destinationFolder -ItemType Directory -Force | Out-Null
