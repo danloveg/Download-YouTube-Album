@@ -1,3 +1,11 @@
+Class DependencyException : System.Exception {
+    DependencyException([String] $Message) : base($Message) {}
+}
+
+Class AlbumManifestException : System.Exception {
+    AlbumManifestException([String] $Message) : base($Message) {}
+}
+
 Function Get-YoutubeAlbum() {
     <#
     .synopsis
@@ -62,19 +70,10 @@ Function Get-YoutubeAlbum() {
     $initialLocation = $NULL
 
     Try {
-        If (-Not(VerifyToolsInstalled)) {
-            return
-        }
-        If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
-            Write-Host ("File '{0}' does not exist." -f $albumManifest) -ForegroundColor Red
-            return
-        }
-
+        VerifyToolsInstalled
+        VerifyManifestExists $albumManifest
         $albumManifestContents = GetContentsWithoutComments $albumManifest
         $albumData = GetAlbumData $albumManifestContents
-        If ($Null -eq $albumData) {
-            return
-        }
 
         $initialLocation = (Get-Location).Path
         $beetConfig = UpdateBeetConfig $initialLocation
@@ -97,7 +96,20 @@ Function Get-YoutubeAlbum() {
         Pop-Location # Pop intial folder from stack
 
         CleanArtistFolderIfEmpty $albumData['artist']
-    } Catch {
+    }
+    Catch [System.IO.FileNotFoundException] {
+        Write-Host "File Not Found Exception:" -ForegroundColor Red
+        Write-Host "$_" -ForegroundColor Red
+    }
+    Catch [DependencyException] {
+        Write-Host "Dependency Exception:" -ForegroundColor Red
+        Write-Host "$_" -ForegroundColor Red
+    }
+    Catch [AlbumManifestException] {
+        Write-Host "Album Manifest Exception:" -ForegroundColor Red
+        Write-Host "$_" -ForegroundColor Red
+    }
+    Catch {
         $e = $_.Exception
         $line = $_.InvocationInfo.ScriptLineNumber
 
@@ -123,12 +135,10 @@ Function CreateNewFolder($folderName) {
 
 Function VerifyToolsInstalled {
     If (-Not(Get-Command python -ErrorAction SilentlyContinue)) {
-        Write-Host "Could not find python installation. Go to python.org to install." -ForegroundColor Red
-        return $False
+        Throw ([DepedencyException]::new("Could not find Python installation. Go to python.org to install."))
     }
     If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue) -And -Not(Get-Command avconv -ErrorAction -SilentlyContinue)) {
-        Write-Host "Could not find FFmpeg or avconv installation, please install either of these tools." -ForegroundColor Red
-        return $False
+        Throw ([DependecyException]::new("Could not find FFmpeg or avconv installation, please install either of these tools."))
     }
     If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
         Write-Warning "Could not find youtube-dl, attemtpting to install with pip."
@@ -137,8 +147,7 @@ Function VerifyToolsInstalled {
         pip install youtube-dl
 
         If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
-            Write-Host "Something went wrong installing youtube-dl. See above output" -ForegroundColor Red
-            return $False
+            Throw ([DepedencyException]::new("Something went wrong installing youtube-dl. See above output"))
         }
     }
     If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
@@ -149,12 +158,15 @@ Function VerifyToolsInstalled {
         pip install requests
 
         If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
-            Write-Host "Something went wrong installing beets. See above output." -ForegroundColor Red
-            return $False
+            Throw ([DepedencyException]::new("Something went wrong installing beets. See above output."))
         }
     }
+}
 
-    return $True
+Function VerifyManifestExists($ManifestPath) {
+    If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
+        Throw ([System.IO.FileNotFoundException]::new("File '$albumManifest' does not exist."))
+    }
 }
 
 Function GetContentsWithoutComments($filePath) {
@@ -194,8 +206,7 @@ Function GetAlbumData($contents) {
     }
 
     If ($artistName -eq '' -Or $albumName -eq '') {
-        Write-Host "Could not find album and artist name in manifest." -ForegroundColor Red
-        return $Null
+        Throw([AlbumManifestException]::new("Could not find album and artist name in manifest."))
     }
 
     $linesAfterAlbumAndArtist = $contents | Select-Object -Skip ($contents.IndexOf($secondLine) + 1)
@@ -205,8 +216,7 @@ Function GetAlbumData($contents) {
         If (-Not([String]::IsNullOrWhiteSpace($line))) {
             $uri = $line -as [System.URI]
             If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
-                Write-Host ("`"{0}`" does not appear to be a url." -f $line) -ForegroundColor Red
-                return $Null
+                Throw([AlbumManifestException]::new("`"$line`" does not appear to be a url."))
             } Else {
                 $urlList.Add($line) | Out-Null
                 $numUrls += 1
@@ -215,8 +225,7 @@ Function GetAlbumData($contents) {
     }
 
     If ($numUrls -eq 0) {
-        Write-Host "Could not find any URLs in the manifest file." -ForegroundColor Red
-        return $Null
+        Throw([AlbumManifestException]::new("Could not find any URLs in the manifest file."))
     }
 
     $albumData = @{}
