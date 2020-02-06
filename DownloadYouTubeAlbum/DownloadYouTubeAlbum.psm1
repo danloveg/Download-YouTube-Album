@@ -315,8 +315,8 @@ Function RestoreBeetConfig($configInfo) {
 }
 
 Function CleanArtistFolderIfEmpty($artistFolderName) {
-    $numItemsInArtistFolder = (Get-ChildItem $artistFolderName -Recurse | Measure-Object).Count
-    If ($numItemsInArtistFolder -le 1) {
+    $numFilesInArtistFolder = (Get-ChildItem -Recurse -File -Path $artistFolderName | Measure-Object).Count
+    If ($numFilesInArtistFolder -eq 0) {
         Remove-Item -Recurse -Force $artistFolderName
     }
 }
