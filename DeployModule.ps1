@@ -1,17 +1,17 @@
 <#
- # Purpose: Allows the user's PowerShell modules to be up to date with the
- # current working contents of this repository.
- #
- # This script deploys the contents of the MODULE_NAME folder to the user's
- # PowerShell modules folder. It checks to see if file contents are different
- # before overwriting the outdated files.
+ # Purpose: Deploys the module to the user's PowerShell documents folder.
+ # It checks to see if the file contents are different before overwriting
+ # the outdated files.
  #
  # If you want to use this script for a different PowerShell module, you
  # simply would need to change $MODULE_NAME and put the script one level
- # above the module you are targeting.
+ # above the module you want to copy to the documents folder.
  #>
 
 $MODULE_NAME = "DownloadYouTubeAlbum"
+$EXCLUDE_COPYING = @(
+    '*.pyc'
+)
 
 If (-Not (Test-Path $Profile -ErrorAction SilentlyContinue)) {
     Write-Host "Create a PowerShell profile first before deploying." -ForegroundColor Red
@@ -26,9 +26,10 @@ If (-Not (Test-Path $destinationFolder -PathType Container)) {
     New-Item $destinationFolder -ItemType Directory -Force | Out-Null
 }
 
+# Copy files
 $filesUpdated = 0
 Write-Host "Deploying $($MODULE_NAME) module files to $($destinationFolder)"
-$sourceFiles = Get-ChildItem -Recurse -File -Path $sourceFolder -Exclude "*.pyc"
+$sourceFiles = Get-ChildItem -Recurse -File -Path $sourceFolder -Exclude $EXCLUDE_COPYING
 ForEach ($sourceFile in $sourceFiles) {
     $destinationFile = $sourceFile.FullName.Replace($sourceFolder, $destinationFolder)
 
@@ -46,8 +47,24 @@ ForEach ($sourceFile in $sourceFiles) {
     }
 }
 
+# Remove files that don't exist for this module
+$filesDeleted = 0
+$destinationFiles = Get-ChildItem -Recurse -File -Path $destinationFolder -Exclude $EXCLUDE_COPYING
+ForEach ($destinationFile in $destinationFiles) {
+    $sourceMirror = $destinationFile.FullName.Replace($destinationFolder, $sourceFolder)
+
+    If (-Not(Test-Path $sourceMirror -PathType Leaf)) {
+        Remove-Item -Path $destinationFile.FullName
+        $filesDeleted += 1
+    }
+}
+
 Write-Host "All changes deployed."
 Write-Host "$($filesUpdated) Files updated."
+
+If ($filesDeleted -gt 0) {
+    Write-Host "$($filesDeleted) Files deleted."
+}
 
 $profileContents = Get-Content $Profile -Raw
 If (-Not ($profileContents -Match $MODULE_NAME)) {
