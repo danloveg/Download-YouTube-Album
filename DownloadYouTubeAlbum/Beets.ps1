@@ -1,12 +1,20 @@
+Function AutoTagAlbum($albumDirectory) {
+    beet import $albumDirectory
+}
+
 Function GetBeetsPlugFolder() {
     return Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
 }
 
-Function GetDefaultBeetConfig($artistDirParent) {
+Function GetDefaultBeetConfig($newBeetsDirectory) {
+    <#
+    Creates a beet config to reflect what the YouTube downloader requires. The
+    main purpose is to tell beets to use the custom plugins written for it.
+    #>
     $beetsPlugFolder = GetBeetsPlugFolder
 
     return @(
-        "directory: $($artistDirParent)",
+        "directory: $($beetsDirectory)",
         "import:",
         "    move: yes",
         "match:",
@@ -25,7 +33,12 @@ Function GetDefaultBeetConfig($artistDirParent) {
     )
 }
 
-Function UpdateBeetConfig($artistDirParent) {
+Function UpdateBeetConfig($newBeetsDirectory) {
+    <#
+    Overwrites beet's configuration file to activate the custom plugins. Returns
+    the beets configuration file location and the original contents in a hash
+    table.
+    #>
     $configLocation = [String](beet config -p)
     $origContents = @()
 
@@ -38,7 +51,7 @@ Function UpdateBeetConfig($artistDirParent) {
         $origContents = (Get-Content $configLocation)
     }
 
-    GetDefaultBeetConfig $artistDirParent | Out-File $configLocation
+    GetDefaultBeetConfig $newBeetsDirectory | Out-File $configLocation
 
     $configInfo = @{}
     $configInfo.Add("configLocation", $configLocation)
