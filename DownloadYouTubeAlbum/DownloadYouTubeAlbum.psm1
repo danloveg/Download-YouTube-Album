@@ -1,6 +1,11 @@
+# DownloadYouTubeAlbum.ps1
+# Author: Daniel Lovegrove
 
-. $PSScriptRoot\Exceptions.ps1
+. $PSScriptRoot\AlbumManifest.ps1
 . $PSScriptRoot\Beets.ps1
+. $PSScriptRoot\Downloader.ps1
+. $PSScriptRoot\Exceptions.ps1
+. $PSScriptRoot\FileSystem.ps1
 . $PSScriptRoot\ToolVerifier.ps1
 
 Function Get-YoutubeAlbum() {
@@ -80,19 +85,17 @@ Function Get-YoutubeAlbum() {
         Set-Location $albumData['artist']
         Push-Location # Add artist folder to stack
 
-        # Download the audio into the album folder
         CreateNewFolder $albumData['album']
         Set-Location $albumData['album']
         Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumData['album'], $albumData['artist']) -ForegroundColor Green
         DownloadAudio $albumData['urls'] $noPlaylist $preferMP3
         Pop-Location # Pop artist folder from stack
 
-        # Update the music tags
         Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
-        beet import $albumData['album']
+        AutoTagAlbum $albumData['album']
         Pop-Location # Pop intial folder from stack
 
-        CleanArtistFolderIfEmpty $albumData['artist']
+        CleanFolderIfEmpty $albumData['artist']
     }
     Catch [System.IO.FileNotFoundException] {
         Write-Host "File Not Found Exception:" -ForegroundColor Red
@@ -121,118 +124,6 @@ Function Get-YoutubeAlbum() {
                 Set-Location $initialLocation
             }
         }
-    }
-}
-
-Function CreateNewFolder($folderName) {
-    If (-Not(Test-Path -Path $folderName -PathType Container)) {
-        New-Item -ItemType Directory -Path $folderName | Out-Null
-    }
-}
-
-
-Function VerifyManifestExists($ManifestPath) {
-    If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
-        Throw ([System.IO.FileNotFoundException]::new("File '$albumManifest' does not exist."))
-    }
-}
-
-Function GetContentsWithoutComments($filePath) {
-    $fileLines = (Get-Content $filePath)
-    $noComments = [System.Collections.ArrayList] @()
-
-    ForEach ($line in $fileLines) {
-        $index = $line.IndexOf('#')
-        If ($index -eq -1) {
-            $index = $line.Length
-        }
-        $noComments.Add($line.Substring(0, $index).Trim()) | Out-Null
-    }
-
-    return $noComments
-}
-
-Function GetAlbumData($contents) {
-    $artistName = ''
-    $albumName = ''
-    $urlList = [System.Collections.ArrayList] @()
-
-    $validLines = $contents | Where-Object { $_ -NotMatch '^$|^#.*$' }
-    $firstLine = $validLines | Select-Object -First 1
-    $secondLine = $validLines | Select-Object -Skip 1 -First 1
-
-    ForEach ($line in @($firstLine, $secondLine)) {
-        $artistMatch = [Regex]::Match($line, '(?i)^artist:\s+(.+)$')
-        If ($artistMatch.Success) {
-            $artistName = ([String] $artistMatch.Groups[1].Value).Trim()
-            Continue
-        }
-        $albumMatch = [Regex]::Match($line, '(?i)^album:\s+(.+)$')
-        If ($albumMatch.Success) {
-            $albumName = ([String] $albumMatch.Groups[1].Value).Trim()
-        }
-    }
-
-    If ($artistName -eq '' -Or $albumName -eq '') {
-        Throw([AlbumManifestException]::new("Could not find album and artist name in manifest."))
-    }
-
-    $linesAfterAlbumAndArtist = $contents | Select-Object -Skip ($contents.IndexOf($secondLine) + 1)
-
-    $numUrls = 0
-    Foreach ($line in $linesAfterAlbumAndArtist) {
-        If (-Not([String]::IsNullOrWhiteSpace($line))) {
-            $uri = $line -as [System.URI]
-            If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
-                Throw([AlbumManifestException]::new("`"$line`" does not appear to be a url."))
-            } Else {
-                $urlList.Add($line) | Out-Null
-                $numUrls += 1
-            }
-        }
-    }
-
-    If ($numUrls -eq 0) {
-        Throw([AlbumManifestException]::new("Could not find any URLs in the manifest file."))
-    }
-
-    $albumData = @{}
-    $albumData.Add("artist", $artistName)
-    $albumData.Add("album", $albumName)
-    $albumData.Add("urls", $urlList)
-    return $albumData
-}
-
-Function DownloadAudio($urls, $noPlaylist, $preferMP3) {
-    $preferAvconv = $False
-    If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
-        $preferAvconv = $True
-    }
-    $downloadCmd = 'youtube-dl'
-    If ($preferAvconv) {
-        $downloadCmd += ' --prefer-avconv'
-    }
-    If ($noPlaylist) {
-        $downloadCmd += ' --no-playlist'
-    }
-    $downloadCmd += ' -x --audio-format'
-    If ($preferMP3) {
-        $downloadCmd += ' mp3'
-    }
-    Else {
-        $downloadCmd += ' m4a'
-    }
-    $downloadCmd += ' --output ".\%(title)s.%(ext)s" "{0}"'
-
-    Foreach ($url in $urls) {
-        Invoke-Expression(($downloadCmd -f $url))
-    }
-}
-
-Function CleanArtistFolderIfEmpty($artistFolderName) {
-    $numFilesInArtistFolder = (Get-ChildItem -Recurse -File -Path $artistFolderName | Measure-Object).Count
-    If ($numFilesInArtistFolder -eq 0) {
-        Remove-Item -Recurse -Force $artistFolderName
     }
 }
 
