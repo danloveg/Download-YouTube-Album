@@ -1,10 +1,7 @@
-Class DependencyException : System.Exception {
-    DependencyException([String] $Message) : base($Message) {}
-}
 
-Class AlbumManifestException : System.Exception {
-    AlbumManifestException([String] $Message) : base($Message) {}
-}
+. $PSScriptRoot\Exceptions.ps1
+. $PSScriptRoot\Beets.ps1
+. $PSScriptRoot\ToolVerifier.ps1
 
 Function Get-YoutubeAlbum() {
     <#
@@ -133,35 +130,6 @@ Function CreateNewFolder($folderName) {
     }
 }
 
-Function VerifyToolsInstalled {
-    If (-Not(Get-Command python -ErrorAction SilentlyContinue)) {
-        Throw ([DepedencyException]::new("Could not find Python installation. Go to python.org to install."))
-    }
-    If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue) -And -Not(Get-Command avconv -ErrorAction -SilentlyContinue)) {
-        Throw ([DependecyException]::new("Could not find FFmpeg or avconv installation, please install either of these tools."))
-    }
-    If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
-        Write-Warning "Could not find youtube-dl, attemtpting to install with pip."
-
-        Write-Host "pip install youtube-dl" -ForegroundColor Green
-        pip install youtube-dl
-
-        If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
-            Throw ([DepedencyException]::new("Something went wrong installing youtube-dl. See above output"))
-        }
-    }
-    If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
-        Write-Warning "Could not find beets, attempting to install with pip."
-
-        Write-Host "pip install beets" -ForegroundColor Green
-        pip install beets
-        pip install requests
-
-        If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
-            Throw ([DepedencyException]::new("Something went wrong installing beets. See above output."))
-        }
-    }
-}
 
 Function VerifyManifestExists($ManifestPath) {
     If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
@@ -259,59 +227,6 @@ Function DownloadAudio($urls, $noPlaylist, $preferMP3) {
     Foreach ($url in $urls) {
         Invoke-Expression(($downloadCmd -f $url))
     }
-}
-
-Function UpdateBeetConfig($artistDirParent) {
-    $configLocation = [String](beet config -p)
-    $origContents = @()
-
-    If (-Not (Test-Path -Path $configLocation -PathType Leaf)) {
-        Write-Host ("Creating a new beet default config file.")
-        New-Item -ItemType File -Path $configLocation | Out-Null
-    }
-    Else {
-        Write-Host ("Overwriting beet config, to be restored after processing.")
-        $origContents = (Get-Content $configLocation)
-    }
-
-    GetDefaultBeetConfig $artistDirParent | Out-File $configLocation
-
-    $configInfo = @{}
-    $configInfo.Add("configLocation", $configLocation)
-    $configInfo.Add("originalContents", $origContents)
-    return $configInfo
-}
-
-Function GetDefaultBeetConfig($artistDirParent) {
-    $beetsPlugFolder = GetBeetsPlugFolder
-
-    return @(
-        "directory: $($artistDirParent)",
-        "import:",
-        "    move: yes",
-        "match:",
-        "    strong_rec_thresh: 0.10", # Automatically accept over 90% similar
-        "    max_rec:",
-        "        missing_tracks: strong", # Don't worry so much about missing tracks
-        "",
-        "pluginpath: $($beetsPlugFolder)",
-        "plugins: fromdirname fromyoutubetitle fetchart embedart zero",
-        "embedart:",
-        "    remove_art_file: yes",
-        "fetchart:",
-        "    maxwidth: 512",
-        "zero:",
-        "    fields: day month genre"
-    )
-}
-
-Function GetBeetsPlugFolder() {
-    return Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
-}
-
-Function RestoreBeetConfig($configInfo) {
-    Write-Host "Restoring your beet config."
-    $configInfo["originalContents"] | Out-File $configInfo["configLocation"]
 }
 
 Function CleanArtistFolderIfEmpty($artistFolderName) {
