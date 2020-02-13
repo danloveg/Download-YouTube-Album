@@ -1,6 +1,6 @@
-Function VerifyManifestExists($ManifestPath) {
-    If (-Not (Test-Path -Path $albumManifest -PathType Leaf)) {
-        Throw ([System.IO.FileNotFoundException]::new("File '$albumManifest' does not exist."))
+Function VerifyManifestExists($manifestPath) {
+    If (-Not (Test-Path -Path $manifestPath -PathType Leaf)) {
+        Throw ([System.IO.FileNotFoundException]::new("File '$manifestPath' does not exist."))
     }
 }
 
