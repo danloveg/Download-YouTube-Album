@@ -65,4 +65,6 @@ If beets prompts you to enter input but you do not know how to proceed, I recomm
 This project is tested using [Pester](https://github.com/pester/Pester).
 
 To run the tests, install Pester, and invoke pester on the `DownloadYouTubeAlbum` folder:
-`Invoke-Pester .\DownloadYoutubeAlbum`
+```
+Invoke-Pester .\DownloadYouTubeAlbum
+```
