@@ -1,7 +1,7 @@
 . $PSScriptRoot\ToolVerifier.ps1
 
 Describe 'Tool Verifier Tests' {
-    Context 'Tools all installed' {
+    Context 'VerifyToolsInstalled: Tools all installed' {
         Mock Get-Command { return $True } -ParameterFilter { $Name -eq 'python' }
         Mock Get-Command { return $True } -ParameterFilter { $Name -eq 'ffmpeg' }
         Mock Get-Command { return $True } -ParameterFilter { $Name -eq 'youtube-dl' }
@@ -12,7 +12,7 @@ Describe 'Tool Verifier Tests' {
         }
     }
 
-    Context 'Python not installed' {
+    Context 'VerifyToolsInstalled: Python not installed' {
         Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'python' }
         Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'python' }
 
@@ -21,7 +21,7 @@ Describe 'Tool Verifier Tests' {
         }
     }
 
-    Context 'ffmpeg not installed, avconv not installed' {
+    Context 'VerifyToolsInstalled: ffmpeg not installed, avconv not installed' {
         Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'ffmpeg' }
         Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'avconv' }
         Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'avconv' -And $Name -ne 'ffmpeg' }
@@ -31,7 +31,7 @@ Describe 'Tool Verifier Tests' {
         }
     }
 
-    Context 'youtube-dl not installed' {
+    Context 'VerifyToolsInstalled: youtube-dl not installed' {
         Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'youtube-dl' }
         Mock pip { }
         Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'youtube-dl' }
@@ -42,7 +42,7 @@ Describe 'Tool Verifier Tests' {
     }
 
 
-    Context 'beets not installed' {
+    Context 'VerifyToolsInstalled: beets not installed' {
         Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'beet' }
         Mock pip { }
         Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'beet'}
