@@ -47,11 +47,15 @@ The following programs are installed automatically if you don't have it, using P
 
 Since this tool is written in PowerShell, it must be used from PowerShell. The tool's invocation is very simple:
 
-`Get-YouTubeAlbum [-albumManifest] <path to text file> [-noPlaylist] [-preferMP3]`
+```
+Get-YouTubeAlbum [-albumManifest] <path to text file> [-noPlaylist] [-preferMP3]
+```
 
 If you want more information, you can get help in PowerShell:
 
-`Get-Help Get-YouTubeAlbum -Full`
+```
+Get-Help Get-YouTubeAlbum -Full
+```
 
 ### Beets Prompted me for Input, What do I do?
 
