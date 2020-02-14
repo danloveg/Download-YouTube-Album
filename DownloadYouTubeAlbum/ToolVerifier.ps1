@@ -26,7 +26,7 @@ Function VerifyToolsInstalled {
         pip install requests
 
         If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
-            Throw ([DepedencyException]::new("Something went wrong installing beets. See above output."))
+            Throw ([DependencyException]::new("Something went wrong installing beets. See above output."))
         }
     }
 }

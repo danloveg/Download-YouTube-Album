@@ -41,4 +41,15 @@ Describe 'Tool Verifier Tests' {
             { VerifyToolsInstalled } | Should -Throw 'Something went wrong installing youtube-dl'
         }
     }
+
+
+    Context 'beets not installed' {
+        Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'beet' }
+        Mock pip { }
+        Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'beet'}
+
+        It 'Exception thrown when beets cannot be installed' {
+            { VerifyToolsInstalled } | Should -Throw 'Something went wrong installing beets'
+        }
+    }
 }
