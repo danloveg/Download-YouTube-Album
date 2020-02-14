@@ -1,5 +1,4 @@
 . $PSScriptRoot\ToolVerifier.ps1
-. $PSScriptRoot\Exceptions.ps1
 
 Describe 'Tool Verifier Tests' {
     Context 'Tools all installed' {
