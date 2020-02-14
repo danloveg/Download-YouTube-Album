@@ -19,7 +19,7 @@ Function Get-YoutubeAlbum() {
     Use youtube-dl to download a list of m4a files (or mp3s) from URLs, then use
     beets tool to automatically update metadata and album art.
 
-    .parameter albumManifest
+    .parameter AlbumManifest
     A text file containing information required to download and create an album.
     The file must start with the album and artist name in any order, followed by
     one or more URLs. The URLs may be YouTube playlists. This is a sample album
@@ -29,10 +29,10 @@ Function Get-YoutubeAlbum() {
     Artist: <artist name>
     https://youtube.com/someplaylist
 
-    .parameter noPlaylist
+    .parameter NoPlaylist
     Avoid downloading YouTube URLs as playlists.
 
-    .parameter preferMP3
+    .parameter PreferMP3
     Encode downloaded audio as MP3, rather than the default m4a.
 
     .example
@@ -45,7 +45,7 @@ Function Get-YoutubeAlbum() {
 
     The command to download this album:
 
-    Get-YoutubeAlbum -albumManifest path/to/manifest.txt
+    Get-YoutubeAlbum -AlbumManifest path/to/manifest.txt
 
     .example
     DOWNLOAD MUTLIPLE DIFFERENT SONGS AS AN ALBUM
@@ -60,12 +60,12 @@ Function Get-YoutubeAlbum() {
 
     The command to download this album:
 
-    Get-YoutubeAlbum path/to/manifest.txt -noPlaylist
+    Get-YoutubeAlbum -AlbumManifest path/to/manifest.txt -NoPlaylist
     #>
     Param(
-        [Parameter(Mandatory=$True)] [String] $albumManifest,
-        [Switch] $noPlaylist = $False,
-        [Switch] $preferMP3 = $False
+        [Parameter(Mandatory=$True)] [String] $AlbumManifest,
+        [Switch] $NoPlaylist = $False,
+        [Switch] $PreferMP3 = $False
     )
 
     $beetConfig = $NULL
@@ -73,8 +73,8 @@ Function Get-YoutubeAlbum() {
 
     Try {
         VerifyToolsInstalled
-        VerifyManifestExists $albumManifest
-        $albumManifestContents = GetContentsWithoutComments $albumManifest
+        VerifyManifestExists $AlbumManifest
+        $albumManifestContents = GetContentsWithoutComments $AlbumManifest
         $albumData = GetAlbumData $albumManifestContents
 
         $initialLocation = (Get-Location).Path
@@ -88,7 +88,7 @@ Function Get-YoutubeAlbum() {
         CreateNewFolder $albumData['album']
         Set-Location $albumData['album']
         Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumData['album'], $albumData['artist']) -ForegroundColor Green
-        DownloadAudio $albumData['urls'] $noPlaylist $preferMP3
+        DownloadAudio $albumData['urls'] $NoPlaylist $PreferMP3
         Pop-Location # Pop artist folder from stack
 
         Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
