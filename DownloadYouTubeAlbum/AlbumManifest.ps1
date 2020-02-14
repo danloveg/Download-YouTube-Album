@@ -1,4 +1,3 @@
-
 . $PSScriptRoot\Exceptions.ps1
 
 Function VerifyManifestExists($manifestPath) {
@@ -16,7 +15,7 @@ Function GetContentsWithoutComments($filePath) {
         If ($index -eq -1) {
             $index = $line.Length
         }
-        $noComments.Add($line.Substring(0, $index).Trim()) | Out-Null
+        $noComments.Add($line.Substring(0, $index).TrimEnd()) | Out-Null
     }
 
     return $noComments

@@ -33,7 +33,9 @@ Describe 'Tool Verifier Tests' {
 
     Context 'VerifyToolsInstalled: youtube-dl not installed' {
         Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'youtube-dl' }
-        Mock pip { }
+        Mock pip
+        Mock Write-Warning
+        Mock Write-Host
         Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'youtube-dl' }
 
         It 'Exception thrown when youtube-dl cannot be installed' {
@@ -44,7 +46,9 @@ Describe 'Tool Verifier Tests' {
 
     Context 'VerifyToolsInstalled: beets not installed' {
         Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'beet' }
-        Mock pip { }
+        Mock pip
+        Mock Write-Warning
+        Mock Write-Host
         Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'beet'}
 
         It 'Exception thrown when beets cannot be installed' {
