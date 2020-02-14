@@ -5,8 +5,8 @@ Function VerifyToolsInstalled {
     If (-Not(Get-Command python -ErrorAction SilentlyContinue)) {
         Throw ([DependencyException]::new("Could not find Python installation. Go to python.org to install."))
     }
-    If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue) -And -Not(Get-Command avconv -ErrorAction -SilentlyContinue)) {
-        Throw ([DependecyException]::new("Could not find FFmpeg or avconv installation, please install either of these tools."))
+    If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue) -And -Not(Get-Command avconv -ErrorAction SilentlyContinue)) {
+        Throw ([DependencyException]::new("Could not find FFmpeg or avconv installation, please install either of these tools."))
     }
     If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
         Write-Warning "Could not find youtube-dl, attemtpting to install with pip."

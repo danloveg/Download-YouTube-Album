@@ -18,7 +18,17 @@ Describe 'Tool Verifier Tests' {
         Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'python' }
 
         It 'Exception thrown when python is not installed' {
-            { VerifyToolsInstalled } | Should -Throw 'Could not find Python installation.'
+            { VerifyToolsInstalled } | Should -Throw 'Could not find Python installation'
+        }
+    }
+
+    Context 'ffmpeg not installed, avconv not installed' {
+        Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'ffmpeg' }
+        Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'avconv' }
+        Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'avconv' -And $Name -ne 'ffmpeg' }
+
+        It 'Exception thrown when ffmpeg and avconv are not installed' {
+            { VerifyToolsInstalled } | Should -Throw 'Could not find FFmpeg or avconv installation'
         }
     }
 }
