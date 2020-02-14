@@ -31,4 +31,14 @@ Describe 'Tool Verifier Tests' {
             { VerifyToolsInstalled } | Should -Throw 'Could not find FFmpeg or avconv installation'
         }
     }
+
+    Context 'youtube-dl not installed' {
+        Mock Get-Command { return $False } -ParameterFilter { $Name -eq 'youtube-dl' }
+        Mock pip { }
+        Mock Get-Command { return $True } -ParameterFilter { $Name -ne 'youtube-dl' }
+
+        It 'Exception thrown when youtube-dl cannot be installed' {
+            { VerifyToolsInstalled } | Should -Throw 'Something went wrong installing youtube-dl'
+        }
+    }
 }

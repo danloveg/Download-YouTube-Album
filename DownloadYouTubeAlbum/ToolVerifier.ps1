@@ -15,7 +15,7 @@ Function VerifyToolsInstalled {
         pip install youtube-dl
 
         If (-Not(Get-Command youtube-dl -ErrorAction SilentlyContinue)) {
-            Throw ([DepedencyException]::new("Something went wrong installing youtube-dl. See above output"))
+            Throw ([DependencyException]::new("Something went wrong installing youtube-dl. See above output"))
         }
     }
     If (-Not(Get-Command beet -ErrorAction SilentlyContinue)) {
