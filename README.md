@@ -58,3 +58,11 @@ If you want more information, you can get help in PowerShell:
 The process of downloading an album represented in the `albumManifest` file is *almost always completely automatic*. But sometimes, the underlying program [beets](https://beets.io) will ask you to make a decision. This will happen if the songs names downloaded are not very similar to the actual song names in the album, or possibly if you mistyped the album or artist name in the text file.
 
 If beets prompts you to enter input but you do not know how to proceed, I recommend reading [this short page](https://beets.readthedocs.io/en/stable/guides/tagger.html#similarity) in the beets documentation to become familiar with your options for input in these situations. *Don't be deterred by this!* Beets is simple to interact with in these instances. You'll typically only need to press `Enter`, or tell beets to Apply the changes with "`A`".
+
+
+## How to Run the Tests
+
+This project is tested using [Pester](https://github.com/pester/Pester).
+
+To run the tests, install Pester, and invoke pester on the `DownloadYouTubeAlbum` folder:
+`Invoke-Pester .\DownloadYoutubeAlbum`
