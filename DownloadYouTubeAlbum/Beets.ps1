@@ -11,6 +11,10 @@ Function GetDefaultBeetConfig($newBeetsDirectory) {
     Creates a beet config to reflect what the YouTube downloader requires. The
     main purpose is to tell beets to use the custom plugins written for it.
     #>
+    If ([String]::IsNullOrEmpty($newBeetsDirectory)) {
+        Throw [System.ArgumentException]::New('beets directory cannot be null or empty.')
+    }
+
     $beetsPlugFolder = GetBeetsPlugFolder
 
     return @(
@@ -59,7 +63,18 @@ Function UpdateBeetConfig($newBeetsDirectory) {
     return $configInfo
 }
 
-Function RestoreBeetConfig($configInfo) {
-    Write-Host "Restoring your beet config."
-    $configInfo["originalContents"] | Out-File $configInfo["configLocation"]
+Function RestoreBeetConfig([Hashtable] $configInfo) {
+    If (-Not $configInfo.Contains('originalContents')) {
+        Throw [System.Collections.Generic.KeyNotFoundException]::new('Could not find "originalContents" key in collection')
+    }
+    ElseIf (-Not $configInfo.Contains('configLocation')) {
+        Throw [System.Collections.Generic.KeyNotFoundException]::new('Could not find "configLocation" key in collection')
+    }
+    ElseIf (-Not (Test-Path -Path $configInfo['configLocation'] -ErrorAction SilentlyContinue)) {
+        $Location = $configInfo['configLocation']
+        Throw [System.IO.FileNotFoundException]::new("Configuration file `"$Location`" does not exist")
+    }
+
+    Write-Host 'Restoring your beet config.'
+    $configInfo['originalContents'] | Out-File -FilePath $configInfo['configLocation']
 }
