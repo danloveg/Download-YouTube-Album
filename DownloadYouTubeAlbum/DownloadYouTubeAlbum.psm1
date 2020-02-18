@@ -1,4 +1,4 @@
-# DownloadYouTubeAlbum.ps1
+# DownloadYouTubeAlbum.psm1
 # Author: Daniel Lovegrove
 
 . $PSScriptRoot\AlbumManifest.ps1
