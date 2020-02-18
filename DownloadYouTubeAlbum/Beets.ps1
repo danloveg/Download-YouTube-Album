@@ -14,7 +14,7 @@ Function GetDefaultBeetConfig($newBeetsDirectory) {
     $beetsPlugFolder = GetBeetsPlugFolder
 
     return @(
-        "directory: $($beetsDirectory)",
+        "directory: $($newBeetsDirectory)",
         "import:",
         "    move: yes",
         "match:",
