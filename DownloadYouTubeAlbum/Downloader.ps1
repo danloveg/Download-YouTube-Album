@@ -1,4 +1,4 @@
-Function DownloadAudio($urls, $noPlaylist, $preferMP3) {
+Function DownloadAudio($Urls, $NoPlaylist, $PreferMP3) {
     $preferAvconv = $False
     If (-Not(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
         $preferAvconv = $True
@@ -7,11 +7,11 @@ Function DownloadAudio($urls, $noPlaylist, $preferMP3) {
     If ($preferAvconv) {
         $downloadCmd += ' --prefer-avconv'
     }
-    If ($noPlaylist) {
+    If ($NoPlaylist) {
         $downloadCmd += ' --no-playlist'
     }
     $downloadCmd += ' -x --audio-format'
-    If ($preferMP3) {
+    If ($PreferMP3) {
         $downloadCmd += ' mp3'
     }
     Else {
@@ -19,7 +19,7 @@ Function DownloadAudio($urls, $noPlaylist, $preferMP3) {
     }
     $downloadCmd += ' --output ".\%(title)s.%(ext)s" "{0}"'
 
-    Foreach ($url in $urls) {
-        Invoke-Expression(($downloadCmd -f $url))
+    Foreach ($url in $Urls) {
+        Invoke-Expression -Command ($downloadCmd -f $url)
     }
 }
