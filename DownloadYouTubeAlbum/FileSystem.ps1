@@ -1,6 +1,6 @@
 Function CleanFolderIfEmpty($folder) {
-    $numFilesInArtistFolder = (Get-ChildItem -Recurse -File -Path $folder | Measure-Object).Count
-    If ($numFilesInArtistFolder -eq 0) {
+    $numFilesInFolder = (Get-ChildItem -Recurse -File -Path $folder | Measure-Object).Count
+    If ($numFilesInFolder -eq 0) {
         Remove-Item -Recurse -Force -Path $folder
     }
 }
