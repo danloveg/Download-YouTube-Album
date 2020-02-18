@@ -130,3 +130,9 @@ Function Get-YoutubeAlbum() {
 Export-ModuleMember -Function @(
     "Get-YoutubeAlbum"
 )
+
+Set-Alias Download-Album 'Get-YoutubeAlbum'
+
+Export-ModuleMember -Alias @(
+    'Download-Album'
+)
