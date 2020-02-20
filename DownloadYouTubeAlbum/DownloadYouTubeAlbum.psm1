@@ -63,7 +63,10 @@ Function Get-YoutubeAlbum() {
     Get-YoutubeAlbum -AlbumManifest path/to/manifest.txt -NoPlaylist
     #>
     Param(
-        [Parameter(Mandatory=$True)] [String] $AlbumManifest,
+        [Parameter(Mandatory=$True)]
+        [AllowNull($False)]
+        [AllowEmptyString($False)]
+        [String] $AlbumManifest,
         [Switch] $NoPlaylist = $False,
         [Switch] $PreferMP3 = $False
     )
