@@ -62,6 +62,7 @@ Function Get-YoutubeAlbum() {
 
     Get-YoutubeAlbum -AlbumManifest path/to/manifest.txt -NoPlaylist
     #>
+    [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$True)]
         [AllowNull($False)]
@@ -71,62 +72,61 @@ Function Get-YoutubeAlbum() {
         [Switch] $PreferMP3 = $False
     )
 
-    $beetConfig = $NULL
-    $initialLocation = $NULL
-
-    Try {
-        VerifyToolsInstalled
-        VerifyManifestExists $AlbumManifest
-        $albumManifestContents = GetContentsWithoutComments $AlbumManifest
-        $albumData = GetAlbumData $albumManifestContents
-
+    Begin {
+        $beetConfig = $NULL
         $initialLocation = (Get-Location).Path
-        $beetConfig = UpdateBeetConfig $initialLocation
-        Push-Location # Add current folder to stack
-
-        CreateNewFolder $albumData['artist']
-        Set-Location $albumData['artist']
-        Push-Location # Add artist folder to stack
-
-        CreateNewFolder $albumData['album']
-        Set-Location $albumData['album']
-        Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumData['album'], $albumData['artist']) -ForegroundColor Green
-        DownloadAudio $albumData['urls'] $NoPlaylist $PreferMP3
-        Pop-Location # Pop artist folder from stack
-
-        Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
-        AutoTagAlbum $albumData['album']
-        Pop-Location # Pop intial folder from stack
-
-        CleanFolderIfEmpty $albumData['artist']
     }
-    Catch [System.IO.FileNotFoundException] {
-        Write-Host "File Not Found Exception:" -ForegroundColor Red
-        Write-Host "$_" -ForegroundColor Red
-    }
-    Catch [DependencyException] {
-        Write-Host "Dependency Exception:" -ForegroundColor Red
-        Write-Host "$_" -ForegroundColor Red
-    }
-    Catch [AlbumManifestException] {
-        Write-Host "Album Manifest Exception:" -ForegroundColor Red
-        Write-Host "$_" -ForegroundColor Red
-    }
-    Catch {
-        $e = $_.Exception
-        $line = $_.InvocationInfo.ScriptLineNumber
 
-        Write-Host "LINE: $line`n$e" -ForegroundColor Red
-    } Finally {
+    Process {
+        Try {
+            VerifyToolsInstalled
+            VerifyManifestExists $AlbumManifest
+            $albumManifestContents = GetContentsWithoutComments $AlbumManifest
+            $albumData = GetAlbumData $albumManifestContents
+
+            $beetConfig = UpdateBeetConfig $initialLocation
+            Push-Location # Add current folder to stack
+
+            CreateNewFolder $albumData['artist']
+            Set-Location $albumData['artist']
+            Push-Location # Add artist folder to stack
+
+            CreateNewFolder $albumData['album']
+            Set-Location $albumData['album']
+            Write-Host ("`nDownloading album '{0}' by artist '{1}'`n" -f $albumData['album'], $albumData['artist']) -ForegroundColor Green
+            DownloadAudio $albumData['urls'] $NoPlaylist $PreferMP3
+            Pop-Location # Pop artist folder from stack
+
+            Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
+            AutoTagAlbum $albumData['album']
+            Pop-Location # Pop intial folder from stack
+
+            CleanFolderIfEmpty $albumData['artist']
+        }
+        Catch [System.IO.FileNotFoundException] {
+            Write-Host "File Not Found Exception:" -ForegroundColor Red
+            Write-Host "$_" -ForegroundColor Red
+        }
+        Catch [DependencyException] {
+            Write-Host "Dependency Exception:" -ForegroundColor Red
+            Write-Host "$_" -ForegroundColor Red
+        }
+        Catch [AlbumManifestException] {
+            Write-Host "Album Manifest Exception:" -ForegroundColor Red
+            Write-Host "$_" -ForegroundColor Red
+        }
+        Catch {
+            $e = $_.Exception
+            $line = $_.InvocationInfo.ScriptLineNumber
+            Write-Host "LINE: $line`n$e" -ForegroundColor Red
+        }
+    }
+
+    End {
         If ($Null -ne $beetConfig) {
             RestoreBeetConfig($beetConfig)
         }
-        If ($Null -ne $initialLocation) {
-            $currentLocation = (Get-Location).Path
-            If ($currentLocation -ne $initialLocation) {
-                Set-Location $initialLocation
-            }
-        }
+        Set-Location $initialLocation
     }
 }
 
