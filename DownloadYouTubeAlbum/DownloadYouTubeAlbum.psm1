@@ -8,7 +8,7 @@
 . $PSScriptRoot\FileSystem.ps1
 . $PSScriptRoot\ToolVerifier.ps1
 
-Function Get-YoutubeAlbum() {
+Function Get-YoutubeAlbum {
     <#
     .synopsis
     YouTube music album downloader. Solves the problem of having to download
@@ -22,8 +22,8 @@ Function Get-YoutubeAlbum() {
     .parameter AlbumManifest
     A text file containing information required to download and create an album.
     The file must start with the album and artist name in any order, followed by
-    one or more URLs. The URLs may be YouTube playlists. This is a sample album
-    manifest:
+    one or more URLs. The URLs may be YouTube playlists. You may place comments
+    after a "#". This is a sample album manifest:
 
     Album: <album name>
     Artist: <artist name>
@@ -62,11 +62,8 @@ Function Get-YoutubeAlbum() {
 
     Get-YoutubeAlbum -AlbumManifest path/to/manifest.txt -NoPlaylist
     #>
-    [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$True)]
-        [AllowNull($False)]
-        [AllowEmptyString($False)]
         [String] $AlbumManifest,
         [Switch] $NoPlaylist = $False,
         [Switch] $PreferMP3 = $False
@@ -97,22 +94,22 @@ Function Get-YoutubeAlbum() {
             DownloadAudio $albumData['urls'] $NoPlaylist $PreferMP3
             Pop-Location # Pop artist folder from stack
 
-            Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
+            Write-Host ('`nAttempting to automatically fix music tags.`n') -ForegroundColor Green
             AutoTagAlbum $albumData['album']
             Pop-Location # Pop intial folder from stack
 
             CleanFolderIfEmpty $albumData['artist']
         }
         Catch [System.IO.FileNotFoundException] {
-            Write-Host "File Not Found Exception:" -ForegroundColor Red
+            Write-Host 'File Not Found Exception:' -ForegroundColor Red
             Write-Host "$_" -ForegroundColor Red
         }
         Catch [DependencyException] {
-            Write-Host "Dependency Exception:" -ForegroundColor Red
+            Write-Host 'Dependency Exception:' -ForegroundColor Red
             Write-Host "$_" -ForegroundColor Red
         }
         Catch [AlbumManifestException] {
-            Write-Host "Album Manifest Exception:" -ForegroundColor Red
+            Write-Host 'Album Manifest Exception:' -ForegroundColor Red
             Write-Host "$_" -ForegroundColor Red
         }
         Catch {
@@ -131,7 +128,7 @@ Function Get-YoutubeAlbum() {
 }
 
 Export-ModuleMember -Function @(
-    "Get-YoutubeAlbum"
+    'Get-YoutubeAlbum'
 )
 
 Set-Alias Download-Album 'Get-YoutubeAlbum'
