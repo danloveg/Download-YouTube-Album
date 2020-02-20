@@ -94,7 +94,7 @@ Function Get-YoutubeAlbum {
             DownloadAudio $albumData['urls'] $NoPlaylist $PreferMP3
             Pop-Location # Pop artist folder from stack
 
-            Write-Host ('`nAttempting to automatically fix music tags.`n') -ForegroundColor Green
+            Write-Host ("`nAttempting to automatically fix music tags.`n") -ForegroundColor Green
             AutoTagAlbum $albumData['album']
             Pop-Location # Pop intial folder from stack
 
