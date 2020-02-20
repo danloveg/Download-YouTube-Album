@@ -43,6 +43,65 @@ Describe 'Beets Tests' {
         }
     }
 
+    Context 'UpdateBeetConfig: valid folder' {
+        Mock Write-Host { }
+        Mock Out-File { }
+        Mock beet { return 'path\to\config.yaml' }
+
+        It 'Creates a new config file if one does not exist' {
+            Mock Get-Content { }
+            Mock Test-Path { return $False }
+            Mock New-Item { }
+            Mock GetDefaultBeetConfig { }
+
+            UpdateBeetConfig 'valid\folder'
+
+            Assert-MockCalled New-Item -ParameterFilter { $Path -eq 'path\to\config.yaml' }
+        }
+
+        It 'Returns the original contents of the config file' {
+            Mock Get-Content { return @('line1', 'line2') }
+            Mock Test-Path { return $True }
+            Mock New-Item { }
+            Mock GetDefaultBeetConfig { }
+
+            $Out = UpdateBeetConfig 'valid\folder'
+
+            $Out['configLocation'] | Should -BeExactly 'path\to\config.yaml'
+            $Out['originalContents'] | Should -HaveCount 2
+            $Out['originalContents'][0] | Should -BeExactly 'line1'
+            $Out['originalContents'][1] | Should -BeExactly 'line2'
+        }
+
+        It 'Overwrites the config file with the new contents' {
+            Mock Get-Content { return @() }
+            Mock Test-Path { return $True }
+            Mock New-Item { }
+            Mock GetDefaultBeetConfig { return @('default line 1', 'default line 2') }
+
+            UpdateBeetConfig 'valid\folder'
+
+            Assert-MockCalled Out-File -ParameterFilter { $FilePath -eq 'path\to\config.yaml' }
+        }
+    }
+
+    Context 'UpdateBeetConfig: invalid folder' {
+        Mock beet { }
+        Mock Write-Host { }
+        Mock Test-Path { }
+        Mock New-Item { }
+        Mock Get-Content { }
+        Mock Out-File { }
+
+        It 'Throws if folder is empty' {
+            { UpdateBeetConfig '' } | Should -Throw 'cannot be null or empty'
+        }
+
+        It 'Throws if folder is $NULL' {
+            { UpdateBeetConfig $null } | Should -Throw 'cannot be null or empty'
+        }
+    }
+
     Context 'RestoreBeetConfig: Valid arguments' {
         It 'Out-File is called with contents passed' {
             Mock Out-File { }

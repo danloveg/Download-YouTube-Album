@@ -37,17 +37,22 @@ Function GetDefaultBeetConfig($newBeetsDirectory) {
     )
 }
 
-Function UpdateBeetConfig($newBeetsDirectory) {
+Function UpdateBeetConfig([String] $newBeetsDirectory) {
     <#
     Overwrites beet's configuration file to activate the custom plugins. Returns
     the beets configuration file location and the original contents in a hash
     table.
     #>
+
+    If ([String]::IsNullOrEmpty($newBeetsDirectory)) {
+        Throw [System.ArgumentException]::new('Directory cannot be null or empty.')
+    }
+
     $configLocation = [String](beet config -p)
     $origContents = @()
 
     If (-Not (Test-Path -Path $configLocation -PathType Leaf)) {
-        Write-Host ("Creating a new beet default config file.")
+        Write-Host ("Creating a new beets config file.")
         New-Item -ItemType File -Path $configLocation | Out-Null
     }
     Else {
