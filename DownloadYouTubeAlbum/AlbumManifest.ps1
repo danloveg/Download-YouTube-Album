@@ -33,12 +33,14 @@ Function GetAlbumData($contents) {
     ForEach ($line in @($firstLine, $secondLine)) {
         $artistMatch = [Regex]::Match($line, '(?i)^artist:\s+(.+)$')
         If ($artistMatch.Success) {
-            $artistName = ([String] $artistMatch.Groups[1].Value).Trim()
+            $artistNameDirty = ([String] $artistMatch.Groups[1].Value).Trim()
+            $artistName = $artistNameDirty.Split([System.IO.Path]::GetInvalidFileNameChars()) -Join '_'
             Continue
         }
         $albumMatch = [Regex]::Match($line, '(?i)^album:\s+(.+)$')
         If ($albumMatch.Success) {
-            $albumName = ([String] $albumMatch.Groups[1].Value).Trim()
+            $albumNameDirty = ([String] $albumMatch.Groups[1].Value).Trim()
+            $albumName = $albumNameDirty.Split([System.IO.Path]::GetInvalidFileNameChars()) -Join '_'
         }
     }
 
@@ -51,11 +53,12 @@ Function GetAlbumData($contents) {
     $numUrls = 0
     Foreach ($line in $linesAfterAlbumAndArtist) {
         If (-Not([String]::IsNullOrWhiteSpace($line))) {
-            $uri = $line -as [System.URI]
+            $cleanLine = $line.Trim()
+            $uri = $cleanLine -as [System.URI]
             If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
-                Throw([AlbumManifestException]::new("`"$line`" does not appear to be a url."))
+                Throw([AlbumManifestException]::new("`"$cleanLine`" does not appear to be a url."))
             } Else {
-                $urlList.Add($line) | Out-Null
+                $urlList.Add($cleanLine) | Out-Null
                 $numUrls += 1
             }
         }

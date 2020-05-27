@@ -231,5 +231,32 @@ Describe 'Album Manifest Tests' {
 
             { GetAlbumData $Content } | Should -Throw "`"$InvalidURL`" does not appear to be a URL"
         }
+
+        It 'Trims extra whitespace in contents' {
+            $Content = @(
+                'Artist:   HELLO    ',
+                'Album: WORLD     ',
+                '   https://youtube.com  '
+            )
+
+            $albumData = GetAlbumData $Content
+
+            $albumData['artist'] | Should -BeExactly 'HELLO'
+            $albumData['album'] | Should -BeExactly 'WORLD'
+            $albumData['urls'] | Should -BeExactly 'https://youtube.com'
+        }
+
+        It 'Replaces invalid filename characters in artist and album name with underscore' {
+            $Content = @(
+                'Artist: A"B*C<D>E?F\G|H/I:J',
+                'Album: WHO?'
+                'https://youtube.com'
+            )
+
+            $albumData = GetAlbumData $Content
+
+            $albumData['artist'] | Should -BeExactly 'A_B_C_D_E_F_G_H_I_J'
+            $albumData['album'] | Should -BeExactly 'WHO_'
+        }
     }
 }
