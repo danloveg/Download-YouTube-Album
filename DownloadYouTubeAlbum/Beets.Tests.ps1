@@ -46,7 +46,7 @@ Describe 'Beets Tests' {
     Context 'UpdateBeetConfig: valid folder' {
         Mock Write-Host { }
         Mock Out-File { }
-        Mock beet { return 'path\to\config.yaml' }
+        Mock GetBeetConfigPath { return 'path\to\config.yaml' }
 
         It 'Creates a new config file if one does not exist' {
             Mock Get-Content { }
@@ -86,7 +86,7 @@ Describe 'Beets Tests' {
     }
 
     Context 'UpdateBeetConfig: invalid folder' {
-        Mock beet { }
+        Mock GetDefaultBeetConfig { }
         Mock Write-Host { }
         Mock Test-Path { }
         Mock New-Item { }

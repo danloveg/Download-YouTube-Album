@@ -2,6 +2,10 @@ Function AutoTagAlbum($albumDirectory) {
     beet import $albumDirectory
 }
 
+Function GetBeetConfigPath() {
+    return [String] (beet config -p)
+}
+
 Function GetBeetsPlugFolder() {
     return Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
 }
@@ -48,7 +52,7 @@ Function UpdateBeetConfig([String] $newBeetsDirectory) {
         Throw [System.ArgumentException]::new('Directory cannot be null or empty.')
     }
 
-    $configLocation = [String](beet config -p)
+    $configLocation = GetBeetConfigPath
     $origContents = @()
 
     If (-Not (Test-Path -Path $configLocation -PathType Leaf)) {
