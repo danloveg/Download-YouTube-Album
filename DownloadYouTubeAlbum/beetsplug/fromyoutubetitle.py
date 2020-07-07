@@ -23,19 +23,19 @@ class FromYoutubeTitlePlugin(BeetsPlugin):
 
 
 YOUTUBE_TITLE_JUNK = [
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*Official\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?(?:Music\s)?Video\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s|Original\s)?Audio\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Official\s)?Lyrics?(?:\sVideo|\sOn\sScreen)?\s*'
-               r'[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*Lyrics,\sAudio\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*Full\s(?:Album|Song)(?:\sStream)\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:New\s)?\d{4}\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*iTunes.*?\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:Explicit(?:\sVersion)?|Clean(?:\sVersion)?|'
-               r'Parental\sAdvisory)\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*(?:New\s)?(?:HQ|HD|CDQ)(?:\sVersion)?\s*[\)\]\}])'),
-    re.compile(r'(?i)(?P<junk>[\(\[\{]\s*New\sSong(?:\s\d{4})?\s*[\)\]\}])')
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?(?:Explicit|Clean|Parental\sAdvisory).*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?(?:HQ|HD|CDQ).*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Audio.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Album.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Song.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Video.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Lyric.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Visualizer.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?iTunes.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Official.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Original.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Version.*?[\)\]\}])'),
+    re.compile(r'(?i)(?P<junk>[\(\[\{].*?Prod(?:uced)?\sBy.*?[\)\]\}])'),
 ]
 
 
@@ -45,7 +45,7 @@ EXTRA_STRIP_PATTERNS = [
 ]
 
 
-def set_titles_no_junk(task, session):
+def set_titles_no_junk(task, _):
     items = task.items if task.is_album else [task.item]
 
     for item in items:
@@ -75,10 +75,10 @@ def remove_junk(title: str, *junk_patterns):
             if match_obj is not None:
                 new_title = new_title.replace(match_obj.group('junk'), '')
 
-    return smart_strip(new_title)
+    return extra_strip(new_title)
 
 
-def smart_strip(string: str):
+def extra_strip(string: str):
     stripped_string = string
     for pattern in EXTRA_STRIP_PATTERNS:
         match_obj = pattern.match(stripped_string)
