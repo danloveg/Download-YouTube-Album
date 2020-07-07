@@ -10,6 +10,12 @@ Function GetBeetsPlugFolder() {
     return Join-Path -Path $PSScriptRoot -ChildPath "beetsplug"
 }
 
+
+Function GetConfigTemplatePath() {
+    $TemplateDir = Join-Path -Path $PSScriptRoot -ChildPath 'templates'
+    return (Join-Path -Path $TemplateDir -ChildPath 'config.yaml')
+}
+
 Function GetDefaultBeetConfig($newBeetsDirectory) {
     <#
     Creates a beet config to reflect what the YouTube downloader requires. The
@@ -19,26 +25,23 @@ Function GetDefaultBeetConfig($newBeetsDirectory) {
         Throw [System.ArgumentException]::New('beets directory cannot be null or empty.')
     }
 
-    $beetsPlugFolder = GetBeetsPlugFolder
+    $ConfigFile = GetConfigTemplatePath
 
-    return @(
-        "directory: $($newBeetsDirectory)",
-        "import:",
-        "    move: yes",
-        "match:",
-        "    strong_rec_thresh: 0.10", # Automatically accept over 90% similar
-        "    max_rec:",
-        "        missing_tracks: strong", # Don't worry so much about missing tracks
-        "",
-        "pluginpath: $($beetsPlugFolder)",
-        "plugins: fromdirname fromyoutubetitle fetchart embedart zero",
-        "embedart:",
-        "    remove_art_file: yes",
-        "fetchart:",
-        "    maxwidth: 512",
-        "zero:",
-        "    fields: day month genre"
-    )
+    If (-Not(Test-Path $ConfigFile -PathType Leaf -ErrorAction SilentlyContinue)) {
+        $Msg = 'config.yaml template was moved or deleted!'
+        Throw [System.IO.FileNotFoundException]::New($Msg)
+    }
+
+    $ConfigTemplate = (Get-Content $ConfigFile -Raw)
+
+    # Template variables - DO NOT REMOVE!
+    $BeetsDirectory = $newBeetsDirectory
+    $BeetsPluginpath = GetBeetsPlugFolder
+
+    # Fill variables in template
+    $ConfigContents = $ExecutionContext.InvokeCommand.ExpandString($ConfigTemplate)
+
+    return $ConfigContents
 }
 
 Function UpdateBeetConfig([String] $newBeetsDirectory) {

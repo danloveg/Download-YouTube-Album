@@ -6,28 +6,18 @@ Describe 'Beets Tests' {
 
         It 'Has the plugin folder in pluginpath' {
             $ConfigContents = GetDefaultBeetConfig 'dummyValue'
-            $ConfigContents | Should -Contain 'pluginpath: beetsPlugFolder'
+            $ConfigContents | Should -Match 'pluginpath: beetsPlugFolder'
         }
 
         It 'Uses the passed folder as the beets library directory' {
             $ConfigContents = GetDefaultBeetConfig 'library'
-            $ConfigContents | Should -Contain 'directory: library'
+            $ConfigContents | Should -Match 'directory: library'
         }
 
         It 'Has the custom beets plugins activated' {
             $ConfigContents = GetDefaultBeetConfig 'dummyValue'
-
-            $PluginLine = ''
-            ForEach ($line in $ConfigContents) {
-                If ($line -Match '^plugins:.+$') {
-                    $PluginLine = $line
-                    Break
-                }
-            }
-
-            $PluginLine | Should -Not -BeNullOrEmpty
-            $PluginLine | Should -Match 'fromyoutubetitle'
-            $PluginLine | Should -Match 'fromdirname'
+            $ConfigContents | Should -Match 'fromyoutubetitle'
+            $ConfigContents | Should -Match 'fromdirname'
         }
     }
 
