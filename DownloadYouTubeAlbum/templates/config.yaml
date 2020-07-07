@@ -1,0 +1,36 @@
+# Feel free to modify this beets config template to suit your needs.
+#
+# This file will will be loaded as the configuration file for beets when an album is downloaded. To
+# see config options for beets, visit https://beets.readthedocs.io/en/stable/reference/config.html
+#
+# Note: Do not remove options which are proceeded by "DO NOT REMOVE" unless you are absolutely sure
+# you know what you're doing.
+
+
+directory: ${BeetsDirectory} # DO NOT REMOVE
+
+import:
+    move: yes
+
+match:
+    # Automatically accept over 90% similar
+    strong_rec_thresh: 0.10
+    max_rec:
+        # Don't worry so much about missing tracks
+        missing_tracks: strong
+
+pluginpath: ${BeetsPluginpath} # DO NOT REMOVE
+
+plugins: # DO NOT REMOVE
+    - fromdirname # DO NOT REMOVE
+    - fromyoutubetitle # DO NOT REMOVE
+    - fetchart
+    - embedart
+    - zero
+
+fetchart:
+    maxwidth: 512
+embedart:
+    remove_art_file: yes
+zero:
+    fields: day month genre
