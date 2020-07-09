@@ -45,7 +45,7 @@ EXTRA_STRIP_PATTERNS = [
 ]
 
 
-def set_titles_no_junk(task, _):
+def set_titles_no_junk(task, session):
     items = task.items if task.is_album else [task.item]
 
     for item in items:
