@@ -99,7 +99,7 @@ Describe 'Album Manifest Tests' {
         }
     }
 
-    Context 'GetAlbumData: All contents valid' {
+    Context 'GetAlbumDataFromManifest: All contents valid' {
         It 'Parses if artist is first, album is second' {
             $Content = @(
                 'Artist: Elton John',
@@ -107,7 +107,7 @@ Describe 'Album Manifest Tests' {
                 'https://youtube.com'
             )
 
-            $Output = GetAlbumData $Content
+            $Output = GetAlbumDataFromManifest $Content
 
             $Output['Artist'] | Should -BeExactly 'Elton John'
             $Output['Album'] | Should -BeExactly 'Greatest Hits'
@@ -122,7 +122,7 @@ Describe 'Album Manifest Tests' {
                 'https://youtube.com'
             )
 
-            $Output = GetAlbumData $Content
+            $Output = GetAlbumDataFromManifest $Content
 
             $Output['Artist'] | Should -BeExactly 'Elton John'
             $Output['Album'] | Should -BeExactly 'Greatest Hits'
@@ -146,7 +146,7 @@ Describe 'Album Manifest Tests' {
                 ''
             )
 
-            $Output = GetAlbumData $Content
+            $Output = GetAlbumDataFromManifest $Content
 
             $Output['Artist'] | Should -BeExactly 'Elton John'
             $Output['Album'] | Should -BeExactly 'Greatest Hits'
@@ -156,14 +156,14 @@ Describe 'Album Manifest Tests' {
         }
     }
 
-    Context 'GetAlbumData: Content missing' {
+    Context 'GetAlbumDataFromManifest: Content missing' {
         It 'Throws if artist line does not exist' {
             $Content = @(
                 'Album: Greatest Hits',
                 'https://youtube.com'
             )
 
-            { GetAlbumData $Content } | Should -Throw 'Could not find album and artist'
+            { GetAlbumDataFromManifest $Content } | Should -Throw 'Could not find album and artist'
         }
 
         It 'Throws if album line does not exist' {
@@ -172,7 +172,7 @@ Describe 'Album Manifest Tests' {
                 'https://youtube.com'
             )
 
-            { GetAlbumData $Content } | Should -Throw 'Could not find album and artist'
+            { GetAlbumDataFromManifest $Content } | Should -Throw 'Could not find album and artist'
         }
 
         It 'Throws if there are no URLs' {
@@ -181,11 +181,11 @@ Describe 'Album Manifest Tests' {
                 'Album: Greatest Hits'
             )
 
-            { GetAlbumData $Content } | Should -Throw 'Could not find any URLs'
+            { GetAlbumDataFromManifest $Content } | Should -Throw 'Could not find any URLs'
         }
     }
 
-    Context 'GetAlbumData: Malformed data' {
+    Context 'GetAlbumDataFromManifest: Malformed data' {
         It 'Throws if Artist line is malformed' {
             $Content = @(
                 'Artist -> Elton John',
@@ -193,7 +193,7 @@ Describe 'Album Manifest Tests' {
                 'https://youtube.com'
             )
 
-            { GetAlbumData $Content } | Should -Throw 'Could not find album and artist'
+            { GetAlbumDataFromManifest $Content } | Should -Throw 'Could not find album and artist'
         }
 
         It 'Throws if album line is malformed' {
@@ -203,7 +203,7 @@ Describe 'Album Manifest Tests' {
                 'https://youtube.com'
             )
 
-            { GetAlbumData $Content } | Should -Throw 'Could not find album and artist'
+            { GetAlbumDataFromManifest $Content } | Should -Throw 'Could not find album and artist'
         }
 
         It 'Throws if URLs are invalid' {
@@ -215,7 +215,7 @@ Describe 'Album Manifest Tests' {
                 $InvalidURL
             )
 
-            { GetAlbumData $Content } | Should -Throw "`"$InvalidURL`" does not appear to be a URL"
+            { GetAlbumDataFromManifest $Content } | Should -Throw "`"$InvalidURL`" does not appear to be a URL"
         }
 
         It 'Throws if one of multiple URLs are invalid' {
@@ -229,7 +229,7 @@ Describe 'Album Manifest Tests' {
                 $InvalidURL
             )
 
-            { GetAlbumData $Content } | Should -Throw "`"$InvalidURL`" does not appear to be a URL"
+            { GetAlbumDataFromManifest $Content } | Should -Throw "`"$InvalidURL`" does not appear to be a URL"
         }
 
         It 'Trims extra whitespace in contents' {
@@ -239,7 +239,7 @@ Describe 'Album Manifest Tests' {
                 '   https://youtube.com  '
             )
 
-            $albumData = GetAlbumData $Content
+            $albumData = GetAlbumDataFromManifest $Content
 
             $albumData['artist'] | Should -BeExactly 'HELLO'
             $albumData['album'] | Should -BeExactly 'WORLD'
@@ -253,7 +253,7 @@ Describe 'Album Manifest Tests' {
                 'https://youtube.com'
             )
 
-            $albumData = GetAlbumData $Content
+            $albumData = GetAlbumDataFromManifest $Content
 
             $albumData['artist'] | Should -BeExactly 'A_B_C_D_E_F_G_H_I_J'
             $albumData['album'] | Should -BeExactly 'WHO_'

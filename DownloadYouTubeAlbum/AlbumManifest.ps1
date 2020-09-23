@@ -22,7 +22,7 @@ Function GetContentsWithoutComments($filePath) {
     return $noComments
 }
 
-Function GetAlbumData($contents) {
+Function GetAlbumDataFromManifest($contents) {
     $artistName = ''
     $albumName = ''
 
