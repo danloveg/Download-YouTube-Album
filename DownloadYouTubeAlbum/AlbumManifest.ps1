@@ -57,3 +57,26 @@ Function GetAlbumDataFromManifest($contents) {
     $albumData.Add("urls", $urlList)
     return $albumData
 }
+
+Function GetAlbumDataFromLiterals {
+    Param(
+        [Parameter(Mandatory=$True)]
+        [String]
+        $ArtistName,
+
+        [Parameter(Mandatory=$True)]
+        [String]
+        $AlbumName,
+
+        [Parameter(Mandatory=$True)]
+        [String[]]
+        $Urls
+    )
+
+    $VerifiedUrls = @(GetVerifiedUrlList -Urls $Urls)
+    $albumData = @{}
+    $albumData.Add("artist", $ArtistName)
+    $albumData.Add("album", $AlbumName)
+    $albumData.Add("urls", $VerifiedUrls)
+    return $albumData
+}

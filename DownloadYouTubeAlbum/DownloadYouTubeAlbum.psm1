@@ -19,15 +19,26 @@ Function Get-YoutubeAlbum {
     Use youtube-dl to download a list of m4a files (or mp3s) from URLs, then use
     beets tool to automatically update metadata and album art.
 
+    .parameter Artist
+    The name of the artist who created the album
+
+    .parameter Album
+    The name of the album being downloaded
+
+    .parameter Urls
+    The list of URLs to download music from
+
     .parameter AlbumManifest
     A text file containing information required to download and create an album.
-    The file must start with the album and artist name in any order, followed by
-    one or more URLs. The URLs may be YouTube playlists. You may place comments
-    after a "#". This is a sample album manifest:
+    If you do not want to use the literal -Artist -Album & -Urls parameters, you
+    can input a manifest file. The file must start with the album and artist
+    name (in any order) followed by one or more URLs on each line. The URLs may
+    be YouTube playlists. You may place comments in the file after a "#". This
+    is a sample album manifest:
 
     Album: <album name>
     Artist: <artist name>
-    https://youtube.com/someplaylist
+    https://youtube.com/someplaylist # Contains all songs on the album
 
     .parameter NoPlaylist
     Avoid downloading YouTube URLs as playlists.
@@ -36,35 +47,39 @@ Function Get-YoutubeAlbum {
     Encode downloaded audio as MP3, rather than the default m4a.
 
     .example
-    DOWNLOAD ONE PLAYLIST AS AN ALBUM
+    DOWNLOAD ONE PLAYLIST AS AN ALBUM WITH A MANIFEST
     Assume the artist is Foo, and the album is Bar. The album manifest should contain:
 
     Artist: Foo
     Album: Bar
-    https://youtube.com/foobarplaylist
+    https://youtube.com/fooplaylist
 
-    The command to download this album:
+    The command to download the album from the manifest:
 
-    Get-YoutubeAlbum -AlbumManifest path/to/manifest.txt
+    $> Get-YoutubeAlbum -AlbumManifest path/to/manifest.txt
 
     .example
     DOWNLOAD MUTLIPLE DIFFERENT SONGS AS AN ALBUM
-    Assume the artist is Peel, and the album is Banana. Also assume that there
-    are three songs in the album. The album manifest should contain:
 
-    Album: Banana
-    Arist: Peel
-    https://youtube.com/someurl1
-    https://youtube.com/someurl2
-    https://youtube.com/someurl3
+    $> Get-YoutubeAlbum -Artist 'Foo' -Album 'Bar', -Urls 'song1', 'song2', 'song3'  -NoPlaylist
 
-    The command to download this album:
+    .example
+    DOWNLOAD ONE PLAYLIST AS AN ALBUM OF MP3s (NO MANIFEST)
 
-    Get-YoutubeAlbum -AlbumManifest path/to/manifest.txt -NoPlaylist
+    $> Get-YoutubeAlbum -Artist 'Foo' -Album 'Bar' -Urls 'playlist' -PreferMP3
     #>
+    [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$True, ParameterSetName='Manifest')]
         [String] $AlbumManifest,
+
+        [Parameter(Mandatory=$True, ParameterSetName='Literal')]
+        [String] $Artist,
+        [Parameter(Mandatory=$True, ParameterSetName='Literal')]
+        [String] $Album,
+        [Parameter(Mandatory=$True, ParameterSetName='Literal')]
+        [String[]] $Urls,
+
         [Switch] $NoPlaylist = $False,
         [Switch] $PreferMP3 = $False
     )
@@ -77,9 +92,15 @@ Function Get-YoutubeAlbum {
     Process {
         Try {
             VerifyToolsInstalled
-            VerifyManifestExists $AlbumManifest
-            $albumManifestContents = GetContentsWithoutComments $AlbumManifest
-            $albumData = GetAlbumData $albumManifestContents
+
+            If ($PSCmdlet.ParameterSetName -eq 'Manifest') {
+                VerifyManifestExists $AlbumManifest
+                $albumManifestContents = GetContentsWithoutComments $AlbumManifest
+                $albumData = GetAlbumDataFromManifest $albumManifestContents
+            }
+            Else {
+                $albumData = GetAlbumDataFromLiterals -ArtistName $Artist -AlbumName $Album -Urls $Urls
+            }
 
             $beetConfig = UpdateBeetConfig $initialLocation
             Push-Location # Add current folder to stack
