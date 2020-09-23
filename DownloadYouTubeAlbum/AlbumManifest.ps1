@@ -1,4 +1,5 @@
 . $PSScriptRoot\Exceptions.ps1
+. $PSScriptRoot\Urls.ps1
 
 Function VerifyManifestExists($manifestPath) {
     If (-Not (Test-Path -Path $manifestPath -PathType Leaf)) {
@@ -24,7 +25,6 @@ Function GetContentsWithoutComments($filePath) {
 Function GetAlbumData($contents) {
     $artistName = ''
     $albumName = ''
-    $urlList = [System.Collections.ArrayList] @()
 
     $validLines = $contents | Where-Object { $_ -NotMatch '^$|^#.*$' }
     $firstLine = $validLines | Select-Object -First 1
@@ -45,28 +45,11 @@ Function GetAlbumData($contents) {
     }
 
     If ($artistName -eq '' -Or $albumName -eq '') {
-        Throw([AlbumManifestException]::new("Could not find album and artist name in manifest."))
+        Throw([AlbumDataException]::new("Could not find album and artist name in manifest."))
     }
 
     $linesAfterAlbumAndArtist = $contents | Select-Object -Skip ($contents.IndexOf($secondLine) + 1)
-
-    $numUrls = 0
-    Foreach ($line in $linesAfterAlbumAndArtist) {
-        If (-Not([String]::IsNullOrWhiteSpace($line))) {
-            $cleanLine = $line.Trim()
-            $uri = $cleanLine -as [System.URI]
-            If (($Null -eq $uri) -Or -Not($uri.Scheme -match '[http|https]')) {
-                Throw([AlbumManifestException]::new("`"$cleanLine`" does not appear to be a url."))
-            } Else {
-                $urlList.Add($cleanLine) | Out-Null
-                $numUrls += 1
-            }
-        }
-    }
-
-    If ($numUrls -eq 0) {
-        Throw([AlbumManifestException]::new("Could not find any URLs in the manifest file."))
-    }
+    $urlList = @(GetVerifiedUrlList -Urls $linesAfterAlbumAndArtist)
 
     $albumData = @{}
     $albumData.Add("artist", $artistName)

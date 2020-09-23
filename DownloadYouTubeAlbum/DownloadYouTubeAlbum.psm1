@@ -108,8 +108,8 @@ Function Get-YoutubeAlbum {
             Write-Host 'Dependency Exception:' -ForegroundColor Red
             Write-Host "$_" -ForegroundColor Red
         }
-        Catch [AlbumManifestException] {
-            Write-Host 'Album Manifest Exception:' -ForegroundColor Red
+        Catch [AlbumDataException] {
+            Write-Host 'Album Data Exception:' -ForegroundColor Red
             Write-Host "$_" -ForegroundColor Red
         }
         Catch {
