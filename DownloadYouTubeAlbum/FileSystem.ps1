@@ -5,8 +5,21 @@ Function CleanFolderIfEmpty($folder) {
     }
 }
 
-Function CreateNewFolder($folder) {
-    If (-Not(Test-Path -Path $folder -PathType Container)) {
-        New-Item -ItemType Directory -Path $folder | Out-Null
+Function CreateNewFolder($Folder) {
+    $CleanFolder = CleanInvalidFilenameChars -Filename $Folder
+    If (-Not(Test-Path -Path $CleanFolder -PathType Container)) {
+        New-Item -ItemType Directory -Path $CleanFolder | Out-Null
     }
+}
+
+Function CleanInvalidFilenameChars {
+    Param(
+        [Parameter(Mandatory=$True)]
+        [String]
+        $Filename
+    )
+    $CleanName = ([String] $Filename)
+    $InvalidChars = ([System.IO.Path]::GetInvalidFileNameChars())
+    $CleanName = $CleanName.Split($InvalidChars) -Join '_'
+    Return $CleanName
 }

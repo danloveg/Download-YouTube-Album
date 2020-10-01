@@ -1,5 +1,6 @@
 . $PSScriptRoot\Exceptions.ps1
 . $PSScriptRoot\Urls.ps1
+. $PSScriptRoot\FileSystem.ps1
 
 Function VerifyManifestExists($manifestPath) {
     If (-Not (Test-Path -Path $manifestPath -PathType Leaf)) {
@@ -51,9 +52,12 @@ Function GetAlbumDataFromManifest($contents) {
     $linesAfterAlbumAndArtist = $contents | Select-Object -Skip ($contents.IndexOf($secondLine) + 1)
     $urlList = @(GetVerifiedUrlList -Urls $linesAfterAlbumAndArtist)
 
+    $CleanArtistName = CleanInvalidFilenameChars -Filename $artistName
+    $CleanAlbumName = CleanInvalidFilenameChars -Filename $albumName
+
     $albumData = @{}
-    $albumData.Add("artist", $artistName)
-    $albumData.Add("album", $albumName)
+    $albumData.Add("artist", $CleanArtistName)
+    $albumData.Add("album", $CleanAlbumName)
     $albumData.Add("urls", $urlList)
     return $albumData
 }
@@ -73,10 +77,13 @@ Function GetAlbumDataFromLiterals {
         $Urls
     )
 
+    $CleanArtistName = CleanInvalidFilenameChars -Filename $ArtistName
+    $CleanAlbumName = CleanInvalidFilenameChars -Filename $AlbumName
     $VerifiedUrls = @(GetVerifiedUrlList -Urls $Urls)
+
     $albumData = @{}
-    $albumData.Add("artist", $ArtistName)
-    $albumData.Add("album", $AlbumName)
+    $albumData.Add("artist", $CleanArtistName)
+    $albumData.Add("album", $CleanAlbumName)
     $albumData.Add("urls", $VerifiedUrls)
     return $albumData
 }
